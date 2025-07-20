@@ -1,3 +1,4 @@
+
 # Pokémon Base Stats Visualizer
 
 This project lets you visualize a Pokémon's or your Fakemon's base stats
@@ -20,6 +21,18 @@ Based on:
 ![default state](https://files.catbox.moe/2wihlk.png)
 
 ![edited](https://files.catbox.moe/q7d0m0.png)
+
+
+## Roadmap
+
+- Pokémon Showdown style EV and IV editor
+
+- Categorical database of all exisiting Pokémon using PokéAPI [PokéAPI](https://pokeapi.co) or [Veekun CSVs](https://github.com/veekun/pokedex), would only import
+    - Base stats
+    - Pokémon portraits
+    - Types
+- Option to add user's own portraits and types
+- Concept design![concept](https://files.catbox.moe/lc8idx.png)
 
 
 ## Acknowledgements
