@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pokémon Base Stats Visualizer</title>
+    <link rel="stylesheet" href="pbsv style.css" />
+  </head>
+  <body>
+    <div class="app-wrapper">
+      <div class="left-panel">
+        <div class="search-container">
+          <input
+            type="text"
+            id="pokemon-search-input"
+            placeholder="Search Pokémon..."
+            autocomplete="off"
+          />
+          <button id="search-button">Go</button>
+        </div>
+
+        <div class="portrait-box" id="portrait-box">
+          <span class="portrait-box-placeholder"
+            >Click to upload or search for a Pokémon above</span
+          >
+          <input
+            type="file"
+            id="image-upload-input"
+            accept="image/*"
+            style="display: none;"
+          />
+          <img id="uploaded-portrait" src="#" alt="Pokemon Portrait" />
+          <button id="shiny-toggle-button" class="shiny-toggle-button">
+            ✨
+          </button>
+        </div>
+        <input
+          type="text"
+          id="character-name"
+          placeholder="Enter Pokémon Name"
+          class="pokemon-name-input"
+          onfocus="this.style.caretColor='auto'"
+          onblur="this.style.caretColor='transparent'"
+        />
+        <div class="type-container">
+          <select id="type1-select" class="type-select">
+            <option value="">Type 1</option>
+          </select>
+          <select id="type2-select" class="type-select">
+            <option value="">Type 2</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stat-container" id="stat-container"></div>
+    </div>
+
+    <script src="pbsv script.js"></script>
+  </body>
+</html>
