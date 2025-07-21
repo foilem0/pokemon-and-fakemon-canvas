@@ -2,6 +2,8 @@
 
 This project lets you visualize a Pokémon's or your Fakemon's base stats
 
+[Visit the webpage](https://foilem0.github.io/pokemon-base-stats-visualizer/)
+
 Based on:
 - Pokémon Database's base stat visualizer
 - Pokémon Showdown's teambuilder EV and IV editor
