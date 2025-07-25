@@ -8,7 +8,7 @@ This project lets you visualize a Pokémon's or your Fakemon's information
 Based on:
 - Pokémon Database's base stat visualizer
 - Pokémon Showdown's teambuilder EV and IV editor
-- 
+
 ## Features
 
 - PokéAPI Pokédex integration with updating charcteristics
