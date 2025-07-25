@@ -3,7 +3,7 @@
 
 This project lets you visualize a Pokémon's or your Fakemon's information
 
-[Visit the webpage](https://foilem0.github.io/pokemon-base-stats-visualizer/)
+[Visit the webpage](https://foilem0.github.io/pokemon-and-fakemon-canvas/)
 
 Based on:
 - Pokémon Database's base stat visualizer
