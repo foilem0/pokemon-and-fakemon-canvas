@@ -3,58 +3,114 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pokémon Base Stats Visualizer</title>
-    <link rel="stylesheet" href="pbsv style.css" />
+    <title>Pokémon & Fakemon Canvas</title>
+    <link rel="stylesheet" href="pafc-style.css" />
+    <link rel="preconnect" href="https://pokeapi.co">
   </head>
   <body>
     <div class="app-wrapper">
-      <div class="left-panel">
-        <div class="search-container">
-          <input
-            type="text"
-            id="pokemon-search-input"
-            placeholder="Search Pokémon..."
-            autocomplete="off"
-          />
-          <button id="search-button">Go</button>
-        </div>
-
+      <div id="search-container" class="panel">
+        <input type="text" id="pokemon-search-input" placeholder="Welcome to Pokémon & Fakemon Canvas, search for a Pokémon here or create your own" />
+      </div>
+      <div id="portrait-panel" class="panel">
         <div class="portrait-box" id="portrait-box">
-          <span class="portrait-box-placeholder"
-            >Click to upload or search for a Pokémon above</span
-          >
-          <input
-            type="file"
-            id="image-upload-input"
-            accept="image/*"
-            style="display: none;"
-          />
-          <img id="uploaded-portrait" src="#" alt="Pokemon Portrait" />
-          <button id="shiny-toggle-button" class="shiny-toggle-button">
-            ✨
-          </button>
+          <img id="pokemon-portrait" src="#" alt="Search for a Pokémon above " />
+          <input type="file" id="portrait-upload" accept="image/*" />
+          <div id="form-buttons-container"></div>
+          <button id="shiny-toggle-button">✨</button>
         </div>
-        <input
-          type="text"
-          id="character-name"
-          placeholder="Enter Pokémon Name"
-          class="pokemon-name-input"
-          onfocus="this.style.caretColor='auto'"
-          onblur="this.style.caretColor='transparent'"
-        />
+        <input type="text" id="pokemon-name" placeholder="Pokémon Name" class="pokemon-name-input" />
         <div class="type-container">
-          <select id="type1-select" class="type-select">
-            <option value="">Type 1</option>
-          </select>
-          <select id="type2-select" class="type-select">
-            <option value="">Type 2</option>
-          </select>
+          <div id="type-box-1" class="type-box type-none">
+            <select id="type1-select" class="type-dropdown">
+              <option value="">TYPE 1</option>
+            </select>
+          </div>
+          <div id="type-box-2" class="type-box type-none">
+            <select id="type2-select" class="type-dropdown">
+              <option value="none">TYPE 2</option>
+            </select>
+          </div>
         </div>
       </div>
-
-      <div class="stat-container" id="stat-container"></div>
+      <div id="info-panel" class="panel">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>National №</label>
+            <input type="text" id="info-dex-no" />
+          </div>
+          <div class="info-item">
+            <label>Genus</label>
+            <input type="text" id="info-genus" />
+          </div>
+          <div class="info-item">
+            <label>Height</label>
+            <input type="text" id="info-height" />
+          </div>
+          <div class="info-item">
+            <label>Weight</label>
+            <input type="text" id="info-weight" />
+          </div>
+          <div class="info-item" id="gender-ratio-box">
+            <label>Gender</label>
+            <div id="gender-ratio">
+              <div id="male-ratio">♂ 50%</div>
+              <div id="female-ratio">♀ 50%</div>
+              <input type="range" id="gender-slider" min="0" max="100" />
+            </div>
+          </div>
+          <div class="info-item">
+            <label>Egg Groups</label>
+            <div class="egg-group-box">
+              <input type="text" id="egg-group-1" />
+              <input type="text" id="egg-group-2" />
+            </div>
+          </div>
+          <div class="info-item">
+            <label>Evo. Condition</label>
+            <input type="text" id="info-evo-condition" />
+          </div>
+          <div class="info-item" id="info-color-item">
+            <label>Pokédex Color</label>
+            <input type="text" id="info-color" />
+          </div>
+        </div>
+      </div>
+      <div id="evolution-panel" class="panel">
+        <div class="evolution-stage" id="evo-1">
+          <img id="evo-1-img" />
+          <span id="evo-1-name"></span>
+        </div>
+        <div class="evo-arrow">→</div>
+        <div class="evolution-stage" id="evo-2">
+          <img id="evo-2-img" />
+          <span id="evo-2-name"></span>
+        </div>
+        <div class="evo-arrow">→</div>
+        <div class="evolution-stage" id="evo-3">
+          <img id="evo-3-img" />
+          <span id="evo-3-name"></span>
+        </div>
+      </div>
+      <div id="stats-panel" class="panel">
+        <div id="stat-container"></div>
+      </div>
+      <div id="flavor-text-panel" class="panel">
+        <textarea id="flavor-text">
+Search for a Pokémon to see its Pokédex entry.</textarea>
+      </div>
+      <div id="moves-panel" class="panel">
+        <input type="text" class="move-input" placeholder="Move 1" />
+        <input type="text" class="move-input" placeholder="Move 2" />
+        <input type="text" class="move-input" placeholder="Move 3" />
+        <input type="text" class="move-input" placeholder="Move 4" />
+      </div>
+      <div id="abilities-panel" class="panel">
+        <input type="text" id="ability1" class="ability-box" value="Ability 1" />
+        <input type="text" id="ability2" class="ability-box" value="Ability 2" />
+        <input type="text" id="ability-hidden" class="ability-box hidden-ability" value="Hidden Ability" />
+      </div>
     </div>
-
-    <script src="pbsv script.js"></script>
+    <script src="pafc-script.js"></script>
   </body>
 </html>
