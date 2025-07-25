@@ -1,0 +1,633 @@
+:root {
+  --border-radius: 12px;
+  --panel-bg: #ffffff;
+  --app-bg: #f4f7f9;
+  --text-color: #333;
+  --border-color: #e0e0e0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  background-color: var(--app-bg);
+  color: var(--text-color);
+  margin: 0;
+}
+
+.app-wrapper {
+  display: grid;
+  grid-template-columns: 400px 1fr; /* adjust to move the left panel*/
+  grid-template-areas:
+    "search    search"
+    "portrait stats"
+    "portrait stats"
+    "abilities stats"
+    "moves    info"
+    "flavor     evolution";
+  gap: 10px;
+  width: 100%;
+  max-width: 2000px;
+  margin: 15px auto; /* center the wrapper */
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.panel {
+  background-color: var(--panel-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px S12px rgba(0, 0, 0, 0.05);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#search-container {
+  grid-area: search;
+  position: relative;
+  padding: 10px;
+  margin-top: -25px;
+}
+#portrait-panel {
+  grid-area: portrait;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#info-panel {
+  grid-area: info;
+}
+#evolution-panel {
+  grid-area: evolution;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 10px;
+}
+#stats-panel {
+  grid-area: stats;
+}
+#flavor-text-panel {
+  grid-area: flavor;
+}
+#moves-panel {
+  grid-area: moves;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 10px;
+}
+#abilities-panel {
+  grid-area: abilities;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+#search-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+#portrait-panel {
+  gap: 15px;
+}
+.portrait-box {
+  width: 100%;
+  max-width: 400px;
+  height: 300px;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+#pokemon-portrait {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+#portrait-upload {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+#portrait-box::after {
+  content: "Upload Image";
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  pointer-events: none;
+  opacity: 0; /* hide button first */
+}
+
+#portrait-box:hover::after {
+  opacity: 1;
+}
+
+#form-buttons-container {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 10;
+}
+#form-buttons-container button,
+#form-buttons-container select {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 5px;
+}
+#form-buttons-container img {
+  height: 24px;
+  vertical-align: middle;
+}
+#shiny-toggle-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: none;
+  z-index: 10;
+}
+.pokemon-name-input {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 100%;
+  padding: 5px 3px 5px 3px;
+  text-transform: capitalize;
+  background: transparent;
+}
+
+.type-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 1px;
+  width: 100%;
+}
+
+.type-box {
+  flex: 1;
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.type-dropdown {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  background-color: transparent;
+  color: inherit;
+  font-weight: inherit;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  text-align-last: center;
+}
+
+.type-dropdown option[value=""],
+.type-dropdown option[value="none"] {
+  color: #333;
+  background-color: #f0f0f0;
+}
+
+.type-container.single-type .type-box {
+  flex: none;
+  width: 100%; /* take up the whole type container */
+}
+
+/* apply to type-box-2 */
+.type-box.hidden {
+  display: none;
+}
+
+.type-none {
+  background-color: #ccc;
+  color: white;
+}
+
+.type-normal {
+  background-color: #aa9;
+  color: white;
+}
+
+.type-fire {
+  background-color: #f42;
+  color: white;
+}
+
+.type-water {
+  background-color: #39f;
+  color: white;
+}
+
+.type-electric {
+  background-color: #fc3;
+  color: white;
+}
+
+.type-grass {
+  background-color: #7c5;
+  color: white;
+}
+
+.type-ice {
+  background-color: #6cf;
+  color: white;
+}
+
+.type-fighting {
+  background-color: #b54;
+  color: white;
+}
+
+.type-poison {
+  background-color: #a59;
+  color: white;
+}
+
+.type-ground {
+  background-color: #db5;
+  color: white;
+}
+
+.type-flying {
+  background-color: #89f;
+  color: white;
+}
+
+.type-psychic {
+  background-color: #f59;
+  color: white;
+}
+
+.type-bug {
+  background-color: #ab2;
+  color: white;
+}
+
+.type-rock {
+  background-color: #ba6;
+  color: white;
+}
+
+.type-ghost {
+  background-color: #66b;
+  color: white;
+}
+
+.type-dragon {
+  background-color: #76e;
+  color: white;
+}
+
+.type-dark {
+  background-color: #754;
+  color: white;
+}
+
+.type-steel {
+  background-color: #aab;
+  color: white;
+}
+
+.type-fairy {
+  background-color: #e9e;
+  color: white;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(4, auto);
+  height: 100%;
+  gap: 10px;
+}
+
+.evo-item-sprite {
+  position: absolute; /* figure out how to add the item sprite within the evo-condition box */
+  left: 775px; /* shitty positioning that doesn't work when you zoom, works for now */
+  top: 1021px;
+  transform: translateY(-50%);
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+  background-color: var(--app-bg);
+  border-radius: 5px;
+  padding: 2px;
+}
+
+.info-item {
+  background-color: var(--app-bg);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.info-item label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 5px;
+  text-transform: capitalize;
+}
+.info-item span,
+.info-item .egg-group-box,
+.info-item #gender-ratio {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.info-item input[type="text"] {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-sizing: border-box;
+}
+
+#info-color-item input[type="text"] {
+  text-transform: none;
+}
+
+#gender-ratio {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  color: white;
+  text-align: center;
+  align-items: center;
+  position: relative;
+  padding-bottom: 15px;
+}
+#male-ratio {
+  background-color: #6890f0;
+  padding: 2px;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+}
+#female-ratio {
+  background-color: #f85888;
+  padding: 2px;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+}
+
+#gender-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: calc(100% - 10px);
+  height: 8px;
+  border-radius: 8px;
+  background: linear-gradient(
+    to right,
+    #6890f0 0%,
+    #6890f0 var(--male-percent, 50%),
+    #f85888 var(--male-percent, 50%),
+    #f85888 100%
+  );
+  outline: none;
+  position: absolute;
+  bottom: 0;
+  left: 5px;
+  cursor: grab;
+}
+
+#gender-slider::-moz-range-thumb {
+  width: 0px;
+  height: 0px;
+}
+
+.egg-group-box {
+  display: flex;
+  justify-content: space-around;
+  gap: 5px;
+}
+
+.egg-group-box input[type="text"] {
+  flex: 1;
+  text-align: center;
+}
+
+.evolution-stage {
+  text-align: center;
+}
+.evolution-stage img {
+  width: 70px;
+  height: 70px;
+  background-color: var(--app-bg);
+  border-radius: 50%;
+  display: block;
+  margin-bottom: 5px;
+  image-rendering: optimizeSpeed;
+}
+.evolution-stage span {
+  font-weight: 600;
+  text-transform: capitalize;
+  font-size: 0.9rem;
+}
+.evo-arrow {
+  font-size: 3rem;
+  color: #ccc;
+}
+
+#stat-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+}
+.stat-bar {
+  display: grid;
+  grid-template-columns: 110px 60px 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding-right: 30px;
+}
+.stat-label {
+  font-weight: 600;
+  text-align: right;
+  font-size: 1rem;
+}
+.stat-value {
+  width: 50px;
+  padding: 8px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.stat-value::-webkit-outer-spin-button,
+.stat-value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid #ddd;
+  background: linear-gradient(
+    to right,
+    var(--bar-color) 0%,
+    var(--bar-color) var(--fill-percent),
+    #ffffff var(--fill-percent),
+    #ffffff 100%
+  );
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0;
+  height: 0;
+}
+
+#flavor-text-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-style: italic;
+  color: #555;
+  padding: 15px;
+}
+
+#flavor-text-panel textarea {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 1rem;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  color: #555;
+  text-align: center;
+  font-style: italic;
+  background-color: var(--app-bg);
+  overflow-y: hidden; /* scrollbar hidden, allocated area updates by itself */
+  word-wrap: break-word;
+  overflow-wrap: break-word; /* modern wordwrap solution */
+}
+
+.ability-box {
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  background-color: var(--app-bg);
+  text-transform: capitalize;
+}
+
+#abilities-panel input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: capitalize;
+  box-sizing: border-box;
+  background-color: var(--app-bg);
+}
+
+#abilities-panel input.hidden-ability {
+  border: 2px dashed #ff9800;
+}
+
+.move-input {
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.barchart-rank-1 {
+  --bar-color: #f34444;
+}
+.barchart-rank-2 {
+  --bar-color: #ff7f0f;
+}
+.barchart-rank-3 {
+  --bar-color: #ffdd57;
+}
+.barchart-rank-4 {
+  --bar-color: #a0e515;
+}
+.barchart-rank-5 {
+  --bar-color: #23cd5e;
+}
+.barchart-rank-6 {
+  --bar-color: #00c2b8;
+}
