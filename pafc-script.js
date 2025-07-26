@@ -191,6 +191,13 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		});
 
+		const searchButton = document.getElementById("search-button");
+		if (searchButton) {
+			searchButton.addEventListener("click", () => {
+				debouncedSelectPokemon(searchInput.value.toLowerCase());
+			});
+		}
+
 		shinyToggleBtn.addEventListener("click", toggleShiny);
 
 		portraitUpload.addEventListener("change", handleImageUpload);
@@ -233,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (defaultVariety) {
 				fetchAndDisplayPokemon(defaultVariety.pokemon.url);
 			} else {
-				console.error("No default variety found for this Pokémon species.");
+				console.error("No default variety found for this Pokémon species");
 			}
 
 			// check cache for evo-chain, more instances
@@ -481,6 +488,15 @@ document.addEventListener("DOMContentLoaded", () => {
 		const fillPercent = (value / 255) * 100;
 		slider.style.setProperty("--fill-percent", `${fillPercent}%`);
 
+		slider.classList.remove(
+			"barchart-rank-1",
+			"barchart-rank-2",
+			"barchart-rank-3",
+			"barchart-rank-4",
+			"barchart-rank-5",
+			"barchart-rank-6"
+		);
+
 		let rankClass = "";
 		if (value <= 29) rankClass = "barchart-rank-1";
 		else if (value <= 59) rankClass = "barchart-rank-2";
@@ -491,6 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		slider.classList.add(rankClass);
 	};
+
 
 	const updateBST = () => {
 		let totalStats = 0;
@@ -659,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			);
 			flavorText.value = flavorTextEntry ?
 				flavorTextEntry.flavor_text.replace(/\n|\f/g, " ") :
-				"No flavor text available.";
+				"No flavor text available";
 
 			infoColor.value = currentSpeciesData.color ?
 				currentSpeciesData.color.name :
@@ -738,7 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					}
 				}
 			} else {
-				evoConditionText = "Does not evolve from a prior form.";
+				evoConditionText = "Does not evolve from a prior form";
 			}
 
 			// how i would handle mega evolutions for an evo-condition
@@ -804,9 +821,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			);
 			flavorText.value = englishFlavorText ?
 				englishFlavorText.flavor_text.replace(/\n|\f/g, " ") :
-				"No flavor text available for this Pokémon.";
+				"No flavor text available for this Pokémon";
 		} else {
-			flavorText.value = "Search for a Pokémon to see its Pokédex entry.";
+			flavorText.value = "Search for a Pokémon to see its Pokédex entry";
 		}
 		autoResizeFlavorText();
 	};
@@ -871,7 +888,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		document.getElementById("evo-3-img").src = "#";
 		document.getElementById("evo-3-name").textContent = "";
 
-		flavorText.value = "Search for a Pokémon to see its Pokédex entry.";
+		flavorText.value = "Search for a Pokémon to see its Pokédex entry";
 
 		ability1.value = "Ability 1";
 		ability2.value = "Ability 2";
