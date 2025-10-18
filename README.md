@@ -20,9 +20,9 @@ Based on:
 
 ## Screenshots
 
-![api call](https://files.catbox.moe/7odjrb.png)
+![api call](https://files.catbox.moe/fok5sd.png)
 
-![default state](https://files.catbox.moe/obwzal.png)
+![default state](https://files.catbox.moe/3pa9vs.png)
 
 ## Roadmap
 
