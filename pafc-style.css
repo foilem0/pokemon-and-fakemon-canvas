@@ -702,9 +702,19 @@ textarea::placeholder {
 
 .evolution-flow {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+.evolution-flow.linear {
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.evolution-flow.branched {
+  flex-direction: column;
+  justify-content: center;
 }
 
 .evolution-stage {
@@ -713,6 +723,15 @@ textarea::placeholder {
   flex-direction: column;
   align-items: center;
   min-width: 120px;
+  flex-shrink: 0;
+}
+
+.evolution-flow.linear .evolution-stage {
+  flex-direction: column;
+}
+
+.evolution-flow.branched .evolution-stage {
+  flex-direction: column;
 }
 
 .evolution-sprite {
@@ -736,9 +755,17 @@ textarea::placeholder {
 }
 
 .evo-arrow {
-  font-size: var(--font-size-2xl);
   color: var(--text-secondary);
   line-height: 1;
+}
+
+.evo-arrow.vertical {
+  font-size: var(--font-size-2xl);
+}
+
+.evo-arrow.horizontal {
+  font-size: var(--font-size-2xl);
+  margin: 0 var(--spacing-xs);
 }
 
 .branch-container {
@@ -774,6 +801,15 @@ textarea::placeholder {
   overflow: visible;
   text-overflow: ellipsis;
   text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+.evolution-flow.linear .evolution-condition {
+  margin: 0 var(--spacing-xs);
+}
+
+.evolution-flow.branched .evolution-condition {
+  margin: var(--spacing-xs) 0;
 }
 
 #stat-container {

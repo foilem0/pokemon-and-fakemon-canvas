@@ -719,6 +719,16 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	};
 
+	const isLinearEvolutionChain = (tree) => {
+		// A chain is linear if it has no branches at any level
+		if (!tree) return true;
+		if (tree.children.length > 1) return false; // Multiple children = branched
+		if (tree.children.length === 1) {
+			return isLinearEvolutionChain(tree.children[0]);
+		}
+		return true; // No children = linear (end of chain)
+	};
+
 	const updateEvolutionChain = () => {
 		const evolutionContainer = document.getElementById("evolution-container");
 		evolutionContainer.innerHTML = "";
@@ -730,9 +740,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		const evolutionTree = parseEvolutionChain(getPokemonState('evolutionChain').chain);
 
 		const flowContainer = document.createElement('div');
-		flowContainer.className = 'evolution-flow';
+		const isLinear = isLinearEvolutionChain(evolutionTree);
+		flowContainer.className = isLinear ? 'evolution-flow linear' : 'evolution-flow branched';
 
-		renderEvolutionTree(evolutionTree, flowContainer);
+		renderEvolutionTree(evolutionTree, flowContainer, isLinear);
 		evolutionContainer.appendChild(flowContainer);
 	};
 
@@ -757,7 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		return node;
 	};
 
-	const renderEvolutionTree = (tree, container) => {
+	const renderEvolutionTree = (tree, container, isLinear = false) => {
 		if (!tree) return;
 
 		const stageElement = createEvolutionStage(tree);
@@ -768,19 +779,19 @@ document.addEventListener("DOMContentLoaded", () => {
 				// single evos
 				const child = tree.children[0];
 
-				container.appendChild(createEvolutionArrow());
+				container.appendChild(createEvolutionArrow(isLinear));
 
 				if (child.evolutionDetails && child.evolutionDetails.length > 0) {
 					const condition = createEvolutionCondition(child.evolutionDetails[0]);
 					container.appendChild(condition);
-					container.appendChild(createEvolutionArrow());
+					container.appendChild(createEvolutionArrow(isLinear));
 				}
 
-				renderEvolutionTree(child, container);
+				renderEvolutionTree(child, container, isLinear);
 			} else {
 				// branched evos
 
-				container.appendChild(createEvolutionArrow());
+				container.appendChild(createEvolutionArrow(isLinear));
 
 				const branchContainer = document.createElement('div');
 				branchContainer.className = 'branch-container';
@@ -792,10 +803,10 @@ document.addEventListener("DOMContentLoaded", () => {
 					if (child.evolutionDetails && child.evolutionDetails.length > 0) {
 						const condition = createEvolutionCondition(child.evolutionDetails[0]);
 						branch.appendChild(condition);
-						branch.appendChild(createEvolutionArrow());
+						branch.appendChild(createEvolutionArrow(isLinear));
 					}
 
-					renderEvolutionTree(child, branch);
+					renderEvolutionTree(child, branch, isLinear);
 
 					branchContainer.appendChild(branch);
 				});
@@ -825,10 +836,11 @@ document.addEventListener("DOMContentLoaded", () => {
 		return stage;
 	};
 
-	const createEvolutionArrow = () => {
+	const createEvolutionArrow = (isLinear = false) => {
 		const arrow = document.createElement('div');
 		arrow.className = 'evo-arrow';
-		arrow.textContent = '↓';
+		arrow.textContent = isLinear ? '→' : '↓';
+		arrow.classList.add(isLinear ? 'horizontal' : 'vertical');
 		return arrow;
 	};
 
