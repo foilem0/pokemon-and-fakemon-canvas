@@ -20,13 +20,13 @@
 }
 
 html {
-    overflow: scroll;
-    overflow-x: hidden;
+  overflow: scroll;
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar {
-    width: 0;  
-    background: transparent;
+  width: 0;
+  background: transparent;
 }
 
 body {
@@ -603,7 +603,7 @@ textarea::placeholder {
 }
 
 .evo-item-sprite {
-  position:absolute;
+  position: absolute;
   width: 24px;
   height: 24px;
   object-fit: contain;

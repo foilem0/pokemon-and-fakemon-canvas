@@ -291,7 +291,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		if (activeSuggestionIndex >= 0) {
 			const activeItem = items[activeSuggestionIndex];
-			activeItem.scrollIntoView({ block: "nearest" });
+			activeItem.scrollIntoView({
+				block: "nearest"
+			});
 		}
 	};
 
