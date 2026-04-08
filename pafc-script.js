@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
 	const searchInput = document.getElementById("pokemon-search-input");
 	const suggestionsContainer = document.getElementById("search-suggestions-container");
 	const themeToggleBtn = document.getElementById("theme-toggle");
@@ -83,16 +83,16 @@ document.addEventListener("DOMContentLoaded", () => {
 			apiName: "defense"
 		},
 		{
-			name: "Sp. Attack",
-			apiName: "special-attack"
+			name: "Speed",
+			apiName: "speed"
 		},
 		{
 			name: "Sp. Defense",
 			apiName: "special-defense"
 		},
 		{
-			name: "Speed",
-			apiName: "speed"
+			name: "Sp. Attack",
+			apiName: "special-attack"
 		}
 	];
 
@@ -221,24 +221,18 @@ document.addEventListener("DOMContentLoaded", () => {
 		},
 
 		cleanup() {
-			const items = [];
-			for (let i = 0; i < localStorage.length; i++) {
+			const now = Date.now();
+			for (let i = localStorage.length - 1; i >= 0; i--) {
 				const key = localStorage.key(i);
 				try {
 					const item = JSON.parse(localStorage.getItem(key));
-					items.push({
-						key,
-						expiry: item.expiry || 0
-					});
+					if (item && item.expiry && item.expiry < now) {
+						localStorage.removeItem(key);
+					}
 				} catch {
 					localStorage.removeItem(key);
 				}
 			}
-
-			// remove oldest items 
-			items.sort((a, b) => a.expiry - b.expiry);
-			const toRemove = Math.ceil(items.length * 0.3); // remove 30%
-			items.slice(0, toRemove).forEach(item => localStorage.removeItem(item.key));
 		}
 	};
 
@@ -246,13 +240,444 @@ document.addEventListener("DOMContentLoaded", () => {
 	const SEARCH_INDEX_CACHE_KEY = 'pokemon_species_search_index';
 	let activeSuggestionIndex = -1;
 
-	const getPokemonSpriteUrl = (pokemonUrl) => {
-		const idMatch = pokemonUrl.match(/\/(?:pokemon|pokemon-species)\/(\d+)\/?$/);
-		const id = idMatch ? idMatch[1] : pokemonUrl;
-		return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+	const statElements = {};
+	const affectorElements = {
+		natureSelect: null,
+		levelInput: null,
+		rows: {}
+	};
+	let isAffectorUIBuilt = false;
+
+	const hexagonCache = {
+		built: false,
+		currentPolygon: null,
+		valueNodes: [],
+		svg: null
 	};
 
-	const loadPokemonSearchIndex = async () => {
+const natureEffects = {
+	hardy: { increase: null, decrease: null },
+	lonely: { increase: 'attack', decrease: 'defense' },
+	adamant: { increase: 'attack', decrease: 'special-attack' },
+	naughty: { increase: 'attack', decrease: 'special-defense' },
+	brave: { increase: 'attack', decrease: 'speed' },
+	bold: { increase: 'defense', decrease: 'attack' },
+	docile: { increase: null, decrease: null },
+	relaxed: { increase: 'defense', decrease: 'speed' },
+	impish: { increase: 'defense', decrease: 'special-attack' },
+	lax: { increase: 'defense', decrease: 'special-defense' },
+	timid: { increase: 'speed', decrease: 'attack' },
+	hasty: { increase: 'speed', decrease: 'defense' },
+	serious: { increase: null, decrease: null },
+	jolly: { increase: 'speed', decrease: 'special-attack' },
+	mild: { increase: 'special-attack', decrease: 'defense' },
+	modest: { increase: 'special-attack', decrease: 'attack' },
+	naive: { increase: 'speed', decrease: 'special-defense' },
+	quiet: { increase: 'special-attack', decrease: 'speed' },
+	bashful: { increase: null, decrease: null },
+	quirky: { increase: null, decrease: null },
+	rash: { increase: 'special-attack', decrease: 'special-defense' },
+	sassy: { increase: 'special-defense', decrease: 'speed' },
+	calm: { increase: 'special-defense', decrease: 'attack' },
+	careful: { increase: 'special-defense', decrease: 'special-attack' },
+	gentle: { increase: 'special-defense', decrease: 'defense' }
+};
+
+const natureNames = [
+	'Hardy',
+	'Lonely',
+	'Adamant',
+	'Naughty',
+	'Brave',
+	'Bold',
+	'Docile',
+	'Relaxed',
+	'Impish',
+	'Lax',
+	'Timid',
+	'Hasty',
+	'Serious',
+	'Jolly',
+	'Mild',
+	'Modest',
+	'Naive',
+	'Quiet',
+	'Quirky',
+	'Rash',
+	'Sassy',
+	'Calm',
+	'Careful',
+	'Gentle'
+];
+
+const statAffectors = {
+	level: 50,
+	nature: 'hardy',
+	evs: {},
+	ivs: {}
+};
+
+pokemonStats.forEach((stat) => {
+	statAffectors.evs[stat.apiName] = 0;
+	statAffectors.ivs[stat.apiName] = 31;
+});
+
+const getNatureMultiplier = (statName) => {
+	const nature = natureEffects[statAffectors.nature] || {};
+	if (nature.increase === statName) return 1.1;
+	if (nature.decrease === statName) return 0.9;
+	return 1;
+};
+
+const getNatureSign = (statName) => {
+	const nature = natureEffects[statAffectors.nature] || {};
+	if (nature.increase === statName) return '+';
+	if (nature.decrease === statName) return '-';
+	return '';
+};
+
+const calculateFinalStat = (base, iv, ev, level, statName) => {
+	const adjustedEv = Math.floor(ev / 4);
+	if (statName === 'hp') {
+		return Math.floor(((2 * base + iv + adjustedEv) * level) / 100) + level + 10;
+	}
+	const intermediate = Math.floor(((2 * base + iv + adjustedEv) * level) / 100) + 5;
+	return Math.floor(intermediate * getNatureMultiplier(statName));
+};
+
+const setupStatAffectorUI = () => {
+	const natureSelect = document.getElementById('nature-select');
+	const levelInput = document.getElementById('level-input');
+	const affectorStatContainer = document.getElementById('affector-stat-container');
+
+	affectorElements.natureSelect = natureSelect;
+	affectorElements.levelInput = levelInput;
+
+	if (!isAffectorUIBuilt) {
+		natureSelect.innerHTML = '';
+		natureNames.forEach((name) => {
+			const option = document.createElement('option');
+			option.value = name.toLowerCase();
+			option.textContent = name;
+			if (name.toLowerCase() === statAffectors.nature) option.selected = true;
+			natureSelect.appendChild(option);
+		});
+
+		levelInput.value = statAffectors.level;
+		levelInput.addEventListener('input', () => {
+			const value = parseInt(levelInput.value, 10);
+			statAffectors.level = Number.isNaN(value) ? 50 : Math.min(100, Math.max(1, value));
+			levelInput.value = statAffectors.level;
+			updateFinalStats();
+		});
+
+		affectorStatContainer.innerHTML = '';
+		pokemonStats.forEach((stat) => {
+			const row = document.createElement('div');
+			row.classList.add('affector-stat-row');
+
+			const label = document.createElement('span');
+			label.classList.add('affector-label');
+			label.textContent = stat.name;
+			row.appendChild(label);
+
+			const evGroup = document.createElement('div');
+			evGroup.classList.add('range-group');
+			const evRange = document.createElement('input');
+			evRange.type = 'range';
+			evRange.id = `ev-${stat.apiName}`;
+			evRange.min = '0';
+			evRange.max = '252';
+			evRange.step = '4';
+			evRange.value = statAffectors.evs[stat.apiName];
+			const evValue = document.createElement('span');
+			evValue.classList.add('slider-value');
+			evValue.textContent = `EV ${evRange.value}`;
+			evRange.addEventListener('input', () => {
+				statAffectors.evs[stat.apiName] = parseInt(evRange.value, 10);
+				evValue.textContent = `EV ${evRange.value}`;
+				updateFinalStats();
+			});
+			evGroup.appendChild(evRange);
+			evGroup.appendChild(evValue);
+			row.appendChild(evGroup);
+
+			const ivGroup = document.createElement('div');
+			ivGroup.classList.add('range-group');
+			ivGroup.style.display = 'grid';
+			ivGroup.style.gridTemplateColumns = '1fr auto';
+			ivGroup.style.alignItems = 'center';
+			const ivInput = document.createElement('input');
+			ivInput.type = 'number';
+			ivInput.id = `iv-${stat.apiName}`;
+			ivInput.min = '0';
+			ivInput.max = '31';
+			ivInput.value = statAffectors.ivs[stat.apiName];
+			ivInput.style.width = '68px';
+			const ivLabel = document.createElement('span');
+			ivLabel.classList.add('slider-value');
+			ivLabel.textContent = 'IV';
+			ivInput.addEventListener('input', () => {
+				let value = parseInt(ivInput.value, 10);
+				if (Number.isNaN(value)) value = 0;
+				value = Math.min(31, Math.max(0, value));
+				ivInput.value = value;
+				statAffectors.ivs[stat.apiName] = value;
+				updateFinalStats();
+			});
+			ivGroup.appendChild(ivInput);
+			ivGroup.appendChild(ivLabel);
+			row.appendChild(ivGroup);
+
+			const finalValue = document.createElement('input');
+			finalValue.type = 'text';
+			finalValue.id = `final-affector-value-${stat.apiName}`;
+			finalValue.classList.add('stat-final-value');
+			finalValue.value = '0';
+			finalValue.readOnly = true;
+			row.appendChild(finalValue);
+
+			affectorStatContainer.appendChild(row);
+			affectorElements.rows[stat.apiName] = {
+				evRange,
+				evValue,
+				ivInput,
+				finalValue
+			};
+		});
+
+		natureSelect.addEventListener('change', () => {
+			statAffectors.nature = natureSelect.value;
+			updateFinalStats();
+		});
+
+		isAffectorUIBuilt = true;
+	} else {
+		levelInput.value = statAffectors.level;
+		natureSelect.value = statAffectors.nature;
+		pokemonStats.forEach((stat) => {
+			const elements = affectorElements.rows[stat.apiName];
+			if (elements) {
+				elements.evRange.value = statAffectors.evs[stat.apiName];
+				elements.evValue.textContent = `EV ${elements.evRange.value}`;
+				elements.ivInput.value = statAffectors.ivs[stat.apiName];
+			}
+		});
+	}
+
+	updateFinalStats();
+	closeStatAffectorDropdown();
+};
+
+const updateFinalStats = () => {
+		const levelInput = affectorElements.levelInput || document.getElementById('level-input');
+		statAffectors.level = parseInt(levelInput?.value || statAffectors.level, 10) || statAffectors.level;
+		pokemonStats.forEach((stat) => {
+			const cached = statElements[stat.apiName] || {};
+			const baseValue = parseInt(cached.valueInput?.value || 0, 10);
+			const evValue = statAffectors.evs[stat.apiName] ?? 0;
+			const ivValue = statAffectors.ivs[stat.apiName] ?? 31;
+			const finalValue = calculateFinalStat(baseValue, ivValue, evValue, statAffectors.level, stat.apiName);
+
+			const baseBar = cached.baseBar;
+			const finalDropdownOutput = affectorElements.rows[stat.apiName]?.finalValue;
+			const extensionBar = cached.extensionBar;
+			const labelSign = cached.natureSign;
+
+			const baseFill = Math.min(100, Math.max(0, (baseValue / 255) * 100));
+			if (baseBar) baseBar.style.width = `${baseFill}%`;
+			if (finalDropdownOutput) finalDropdownOutput.value = finalValue;
+			if (labelSign) {
+				const sign = getNatureSign(stat.apiName);
+				labelSign.textContent = sign;
+				labelSign.classList.toggle('positive', sign === '+');
+				labelSign.classList.toggle('negative', sign === '-');
+			}
+
+			if (extensionBar) {
+				const basePercent = Math.min(100, Math.max(0, (baseValue / 255) * 100));
+				const finalPercent = Math.min(100, Math.max(0, (finalValue / 255) * 100));
+				const deltaPercent = finalPercent - basePercent;
+				if (deltaPercent >= 0) {
+					extensionBar.style.left = `${basePercent}%`;
+					extensionBar.style.width = `${deltaPercent}%`;
+					extensionBar.style.backgroundColor = 'rgba(34, 197, 94, 0.22)';
+				} else {
+					extensionBar.style.left = `${finalPercent}%`;
+					extensionBar.style.width = `${Math.abs(deltaPercent)}%`;
+					extensionBar.style.backgroundColor = 'rgba(248, 113, 113, 0.22)';
+				}
+			}
+		});
+
+	const hexagonContainer = document.getElementById('stats-hexagon-container');
+	if (hexagonContainer && !hexagonContainer.classList.contains('hidden')) {
+		updateStatHexagon();
+	}
+};
+
+const buildStatHexagon = () => {
+	const hexagonContainer = document.getElementById('stats-hexagon-container');
+	if (!hexagonContainer) return;
+	hexagonContainer.innerHTML = '';
+
+	const width = 500;
+	const height = 500;
+	const centerX = width / 2;
+	const centerY = height / 2;
+	const radius = 180;
+
+	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('width', width);
+	svg.setAttribute('height', height);
+	svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+	const angles = Array.from({length: 6}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
+	const statNames = pokemonStats.map(stat => stat.name);
+
+	const maxPoints = angles.map((angle) => {
+		const x = centerX + radius * Math.cos(angle);
+		const y = centerY + radius * Math.sin(angle);
+		return [x, y];
+	});
+
+	const maxPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+	const maxPoints2D = maxPoints.map((p) => p.join(',')).join(' ');
+	maxPolygon.setAttribute('points', maxPoints2D);
+	maxPolygon.setAttribute('fill', 'none');
+	maxPolygon.setAttribute('stroke', 'var(--border-primary)');
+	maxPolygon.setAttribute('stroke-width', '1');
+	maxPolygon.setAttribute('opacity', '0.3');
+	svg.appendChild(maxPolygon);
+
+	angles.forEach((angle) => {
+		const x = centerX + radius * Math.cos(angle);
+		const y = centerY + radius * Math.sin(angle);
+		const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+		line.setAttribute('x1', centerX);
+		line.setAttribute('y1', centerY);
+		line.setAttribute('x2', x);
+		line.setAttribute('y2', y);
+		line.setAttribute('class', 'stat-hexagon-axes');
+		svg.appendChild(line);
+	});
+
+	const currentPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+	currentPolygon.setAttribute('class', 'stat-hexagon-polygon');
+	svg.appendChild(currentPolygon);
+
+	hexagonCache.valueNodes = [];
+
+	angles.forEach((angle, i) => {
+		const labelDistance = radius + 30;
+		const labelX = centerX + labelDistance * Math.cos(angle);
+		const labelY = centerY + labelDistance * Math.sin(angle);
+
+		const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		label.setAttribute('x', labelX);
+		label.setAttribute('y', labelY);
+		label.setAttribute('class', 'stat-hexagon-label');
+		label.textContent = statNames[i];
+		svg.appendChild(label);
+
+		const value = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		value.setAttribute('class', 'stat-hexagon-value');
+		hexagonCache.valueNodes.push(value);
+		svg.appendChild(value);
+	});
+
+	hexagonCache.built = true;
+	hexagonCache.currentPolygon = currentPolygon;
+	hexagonCache.svg = svg;
+	hexagonContainer.appendChild(svg);
+	updateStatHexagon();
+};
+
+const updateStatHexagon = () => {
+	if (!hexagonCache.built) {
+		buildStatHexagon();
+		return;
+	}
+
+	const width = 500;
+	const height = 500;
+	const centerX = width / 2;
+	const centerY = height / 2;
+	const radius = 180;
+	const angles = Array.from({length: 6}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
+
+	const statValues = pokemonStats.map((stat) => {
+		const baseValue = parseInt(statElements[stat.apiName]?.valueInput?.value || 0, 10);
+		const evValue = statAffectors.evs[stat.apiName] ?? 0;
+		const ivValue = statAffectors.ivs[stat.apiName] ?? 31;
+		return calculateFinalStat(baseValue, ivValue, evValue, statAffectors.level, stat.apiName);
+	});
+
+	const maxStat = 200;
+	const normalizedValues = statValues.map((v) => Math.min(v / maxStat, 1));
+
+	const currentPoints = angles.map((angle, i) => {
+		const scaledRadius = radius * normalizedValues[i];
+		const x = centerX + scaledRadius * Math.cos(angle);
+		const y = centerY + scaledRadius * Math.sin(angle);
+		return [x, y];
+	});
+
+	const points2D = currentPoints.map((p) => p.join(',')).join(' ');
+	hexagonCache.currentPolygon.setAttribute('points', points2D);
+
+	hexagonCache.valueNodes.forEach((valueNode, index) => {
+		const angle = angles[index];
+		const scaledRadius = radius * normalizedValues[index];
+		const valueDistance = scaledRadius + 22;
+		const x = centerX + valueDistance * Math.cos(angle);
+		const y = centerY + valueDistance * Math.sin(angle);
+		valueNode.setAttribute('x', x);
+		valueNode.setAttribute('y', y);
+		valueNode.textContent = statValues[index];
+	});
+};
+
+const toggleStatsView = () => {
+	const statContainer = document.getElementById('stat-container');
+	const hexagonContainer = document.getElementById('stats-hexagon-container');
+	const toggle = document.getElementById('stats-view-toggle');
+
+	const isBarView = !statContainer.classList.contains('hidden');
+
+	if (isBarView) {
+		statContainer.classList.add('hidden');
+		hexagonContainer.classList.remove('hidden');
+		updateStatHexagon();
+		toggle.textContent = '📊︎';
+	} else {
+		statContainer.classList.remove('hidden');
+		hexagonContainer.classList.add('hidden');
+		toggle.textContent = '📊︎';
+	}
+};
+
+const toggleStatAffectorDropdown = () => {
+	const dropdown = document.getElementById('stat-affector-dropdown');
+	dropdown?.classList.toggle('hidden');
+};
+
+const closeStatAffectorDropdown = () => {
+	const dropdown = document.getElementById('stat-affector-dropdown');
+	dropdown?.classList.add('hidden');
+};
+
+const resetStatAffectors = () => {
+	statAffectors.level = 50;
+	statAffectors.nature = 'hardy';
+	pokemonStats.forEach((stat) => {
+		statAffectors.evs[stat.apiName] = 0;
+		statAffectors.ivs[stat.apiName] = 31;
+	});
+	setupStatAffectorUI();
+};
+
+const loadPokemonSearchIndex = async () => {
 		const cachedIndex = pokemonDataCache.get(SEARCH_INDEX_CACHE_KEY);
 		if (Array.isArray(cachedIndex) && cachedIndex.length > 0) {
 			pokemonSearchIndex.push(...cachedIndex);
@@ -267,7 +692,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				pokemonDataCache.set(SEARCH_INDEX_CACHE_KEY, pokemonSearchIndex);
 			}
 		} catch (error) {
-			console.error("Could not load Pokémon search index:", error);
+			console.error("Could not load PokÃ©mon search index:", error);
 		}
 	};
 
@@ -295,6 +720,13 @@ document.addEventListener("DOMContentLoaded", () => {
 				block: "nearest"
 			});
 		}
+	};
+
+	const getPokemonSpriteUrl = (pokemonUrl) => {
+		if (!pokemonUrl) return "";
+		const match = pokemonUrl.match(/\/(\d+)\/$/);
+		if (!match) return "";
+		return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${match[1]}.png`;
 	};
 
 	const createSuggestionItem = (pokemon, index) => {
@@ -341,11 +773,13 @@ document.addEventListener("DOMContentLoaded", () => {
 			return;
 		}
 
-		const visibleMatches = matches.slice(0, 50);
-		suggestionsContainer.innerHTML = "";
+		const visibleMatches = matches.slice(0, 20);
+		const fragment = document.createDocumentFragment();
 		visibleMatches.forEach((pokemon, index) => {
-			suggestionsContainer.appendChild(createSuggestionItem(pokemon, index));
+			fragment.appendChild(createSuggestionItem(pokemon, index));
 		});
+		suggestionsContainer.innerHTML = "";
+		suggestionsContainer.appendChild(fragment);
 		suggestionsContainer.classList.remove("hidden");
 		activeSuggestionIndex = -1;
 	};
@@ -425,6 +859,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	const init = async () => {
 		applySavedTheme();
 		setupStatBars();
+		cacheStatElements();
+		setupStatAffectorUI();
 		populateTypeDropdowns();
 		await loadPokemonSearchIndex();
 		setupEventListeners();
@@ -462,9 +898,17 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		});
 
-		searchInput.addEventListener("input", () => {
+		searchInput.addEventListener("input", async () => {
 			clearSearchError();
+			if (!pokemonSearchIndex.length) await loadPokemonSearchIndex();
 			showSearchSuggestions(searchInput.value.toLowerCase());
+		});
+
+		searchInput.addEventListener("focus", async () => {
+			if (searchInput.value.trim()) {
+				if (!pokemonSearchIndex.length) await loadPokemonSearchIndex();
+				showSearchSuggestions(searchInput.value.toLowerCase());
+			}
 		});
 
 		if (themeToggleBtn) {
@@ -475,6 +919,17 @@ document.addEventListener("DOMContentLoaded", () => {
 			infoButton.addEventListener("click", () => {
 				infoPopup.classList.toggle("hidden");
 			});
+		}
+
+		const statAffectorToggle = document.getElementById('stat-affector-toggle');
+		const statAffectorClose = document.getElementById('stat-affector-close');
+
+		if (statAffectorToggle) {
+			statAffectorToggle.addEventListener('click', toggleStatAffectorDropdown);
+		}
+
+		if (statAffectorClose) {
+			statAffectorClose.addEventListener('click', closeStatAffectorDropdown);
 		}
 
 		if (popupCloseButton) {
@@ -494,6 +949,14 @@ document.addEventListener("DOMContentLoaded", () => {
 				!suggestionsContainer.contains(event.target) &&
 				event.target !== searchInput) {
 				hideSearchSuggestions();
+			}
+
+			const statAffectorDropdown = document.getElementById('stat-affector-dropdown');
+			const statAffectorToggle = document.getElementById('stat-affector-toggle');
+			if (statAffectorDropdown && !statAffectorDropdown.classList.contains('hidden') &&
+				!statAffectorDropdown.contains(event.target) &&
+				event.target !== statAffectorToggle) {
+				statAffectorDropdown.classList.add('hidden');
 			}
 		});
 
@@ -544,6 +1007,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		pokemonColor.addEventListener("input", updateColorDisplay);
 		flavorText.addEventListener("input", autoResizeFlavorText);
+
+		const statsViewToggle = document.getElementById('stats-view-toggle');
+		if (statsViewToggle) {
+			statsViewToggle.addEventListener('click', toggleStatsView);
+		}
 	};
 
 
@@ -559,7 +1027,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					`${POKEAPI_BASE_URL}pokemon-species/${speciesName}`,
 				);
 				if (!speciesResponse.ok) {
-					throw new Error(`Pokémon "${speciesName}" not found.`);
+					throw new Error(`PokÃ©mon "${speciesName}" not found.`);
 				}
 				speciesData = await speciesResponse.json();
 				pokemonDataCache.set(`species_${speciesName}`, speciesData);
@@ -572,7 +1040,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (defaultVariety) {
 				fetchAndDisplayPokemon(defaultVariety.pokemon.url);
 			} else {
-				console.error("No default variety found for this Pokémon species");
+				console.error("No default variety found for this PokÃ©mon species");
 			}
 
 			// check cache for evo-chain, more instances
@@ -589,7 +1057,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			updateExtraInfo();
 		} catch (error) {
 			console.error(`Error fetching ${speciesName}:`, error);
-			displaySearchError(`Could not find Pokémon: ${speciesName}. Please check the spelling.`);
+			displaySearchError(`Could not find PokÃ©mon: ${speciesName}. Please check the spelling.`);
 			resetUI();
 		}
 	};
@@ -612,7 +1080,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			updateAllUI();
 		} catch (error) {
-			console.error("Error fetching Pokémon data:", error);
+			console.error("Error fetching PokÃ©mon data:", error);
 		}
 	};
 
@@ -696,24 +1164,24 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		});
 		updateBST();
+		updateFinalStats();
 	};
 
+const populateTypeDropdowns = () => {
+	[primaryTypeSelector, secondaryTypeSelector].forEach(selectElement => {
+		const initialOptionValue = selectElement.id === 'type1-select' ? '' : 'none';
+		while (selectElement.children.length > 1 || (selectElement.children.length === 1 && selectElement.children[0].value !== initialOptionValue)) {
+			selectElement.removeChild(selectElement.lastChild);
+		}
 
-	const populateTypeDropdowns = () => {
-		[primaryTypeSelector, secondaryTypeSelector].forEach(selectElement => {
-			const initialOptionValue = selectElement.id === 'type1-select' ? '' : 'none';
-			while (selectElement.children.length > 1 || (selectElement.children.length === 1 && selectElement.children[0].value !== initialOptionValue)) {
-				selectElement.removeChild(selectElement.lastChild);
-			}
-
-			availablePokemonTypes.forEach(type => {
-				const option = document.createElement('option');
-				option.value = type.value;
-				option.textContent = type.name;
-				selectElement.appendChild(option);
-			});
+		availablePokemonTypes.forEach(type => {
+			const option = document.createElement('option');
+			option.value = type.value;
+			option.textContent = type.name;
+			selectElement.appendChild(option);
 		});
-	};
+	});
+};
 
 	const updateTypes = () => {
 		const types = getPokemonState('pokemonData').types;
@@ -764,6 +1232,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			const label = document.createElement("span");
 			label.classList.add("stat-label");
 			label.textContent = stat.name;
+
+			const natureSign = document.createElement("span");
+			natureSign.classList.add("stat-nature-sign");
+			natureSign.id = `nature-sign-${stat.apiName}`;
+			label.appendChild(natureSign);
 			statBarDiv.appendChild(label);
 
 			const valueInput = document.createElement("input");
@@ -774,33 +1247,51 @@ document.addEventListener("DOMContentLoaded", () => {
 			valueInput.max = "255";
 			valueInput.value = "0";
 			valueInput.addEventListener("input", (e) => {
-				const newValue = parseInt(e.target.value);
+				const newValue = parseInt(e.target.value, 10);
 				const slider = document.getElementById(`stat-slider-${stat.apiName}`);
 				if (!isNaN(newValue) && newValue >= 0 && newValue <= 255) {
 					slider.value = newValue;
 					updateStatDisplay(slider, valueInput, newValue);
 				} else if (e.target.value === "") {
-					slider.value = 0; // set the value for updateStatDisplay
-					updateStatDisplay(slider, valueInput, slider.value); // slider.value could be replaced with 0
+					slider.value = 0;
+					updateStatDisplay(slider, valueInput, 0);
 				}
 				updateBST();
+				updateFinalStats();
 			});
 			statBarDiv.appendChild(valueInput);
 
+			const sliderWrapper = document.createElement("div");
+			sliderWrapper.classList.add("slider-wrapper");
+
+			const baseBar = document.createElement("div");
+			baseBar.classList.add("stat-base-bar");
+			baseBar.id = `stat-base-${stat.apiName}`;
+			sliderWrapper.appendChild(baseBar);
+
+			const extensionBar = document.createElement("div");
+			extensionBar.classList.add("stat-extension-bar");
+			extensionBar.id = `stat-extension-${stat.apiName}`;
+			sliderWrapper.appendChild(extensionBar);
+
 			const slider = document.createElement("input");
 			slider.type = "range";
+			slider.classList.add("base-stat-slider");
 			slider.id = `stat-slider-${stat.apiName}`;
 			slider.min = "0";
 			slider.max = "255";
 			slider.value = "0";
 			slider.addEventListener("input", (e) => {
-				const newValue = parseInt(e.target.value);
+				const newValue = parseInt(e.target.value, 10);
 				valueInput.value = newValue;
 				updateStatDisplay(slider, valueInput, newValue);
 				updateBST();
+				updateFinalStats();
 			});
-			statBarDiv.appendChild(slider);
+			sliderWrapper.appendChild(slider);
+			statBarDiv.appendChild(sliderWrapper);
 			statContainer.appendChild(statBarDiv);
+			updateStatDisplay(slider, valueInput, 0);
 		});
 
 		const bstRow = document.createElement("div");
@@ -811,6 +1302,18 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="empty-slider-space"></div>
     `;
 		statContainer.appendChild(bstRow);
+	};
+
+	const cacheStatElements = () => {
+		pokemonStats.forEach((stat) => {
+			statElements[stat.apiName] = {
+				valueInput: document.getElementById(`stat-value-${stat.apiName}`),
+				slider: document.getElementById(`stat-slider-${stat.apiName}`),
+				baseBar: document.getElementById(`stat-base-${stat.apiName}`),
+				extensionBar: document.getElementById(`stat-extension-${stat.apiName}`),
+				natureSign: document.getElementById(`nature-sign-${stat.apiName}`)
+			};
+		});
 	};
 
 	const updateStatDisplay = (slider, valueInput, value) => {
@@ -827,14 +1330,29 @@ document.addEventListener("DOMContentLoaded", () => {
 		);
 
 		let rankClass = "";
-		if (value <= 29) rankClass = "barchart-rank-1";
-		else if (value <= 59) rankClass = "barchart-rank-2";
-		else if (value <= 89) rankClass = "barchart-rank-3";
-		else if (value <= 119) rankClass = "barchart-rank-4";
-		else if (value <= 149) rankClass = "barchart-rank-5";
-		else rankClass = "barchart-rank-6";
+		let rankColor = "#34d399";
+		if (value <= 29) {
+			rankClass = "barchart-rank-1";
+			rankColor = "#f34444";
+		} else if (value <= 59) {
+			rankClass = "barchart-rank-2";
+			rankColor = "#ff7f0f";
+		} else if (value <= 89) {
+			rankClass = "barchart-rank-3";
+			rankColor = "#ffdd57";
+		} else if (value <= 119) {
+			rankClass = "barchart-rank-4";
+			rankColor = "#a0e515";
+		} else if (value <= 149) {
+			rankClass = "barchart-rank-5";
+			rankColor = "#23cd5e";
+		} else {
+			rankClass = "barchart-rank-6";
+			rankColor = "#00c2b8";
+		}
 
 		slider.classList.add(rankClass);
+		slider.style.setProperty("--bar-color", rankColor);
 	};
 
 
@@ -983,7 +1501,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const createEvolutionArrow = (isLinear = false) => {
 		const arrow = document.createElement('div');
 		arrow.className = 'evo-arrow';
-		arrow.textContent = isLinear ? '→' : '↓';
+		arrow.textContent = isLinear ? '\u2192' : '\u2193';
 		arrow.classList.add(isLinear ? 'horizontal' : 'vertical');
 		return arrow;
 	};
@@ -1144,20 +1662,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 	const updateExtraInfo = async () => {
-		if (getPokemonState('speciesData')) {
-			nationalDexNumber.value = getPokemonState('speciesData').id;
-			const genusEntry = getPokemonState('speciesData').genera.find(
+		const speciesData = getPokemonState('speciesData');
+		const pokemonData = getPokemonState('pokemonData');
+		if (speciesData) {
+			nationalDexNumber.value = speciesData.id;
+			const genusEntry = speciesData.genera.find(
 				(g) => g.language.name === "en",
 			);
 			pokemonGenus.value = genusEntry ? genusEntry.genus : "???";
 
-			pokemonColor.value = getPokemonState('speciesData').color ?
-				getPokemonState('speciesData').color.name :
+			pokemonColor.value = speciesData.color ?
+				speciesData.color.name :
 				"???";
 			updateColorDisplay();
 
 			// gender ratio
-			if (getPokemonState('speciesData').gender_rate === -1) {
+			if (speciesData.gender_rate === -1) {
 				maleRatio.textContent = "Genderless";
 				maleRatio.style.width = "100%";
 				femaleRatio.style.width = "0%";
@@ -1169,17 +1689,17 @@ document.addEventListener("DOMContentLoaded", () => {
 					.getElementById("gender-ratio-box")
 					.classList.remove("genderless");
 				genderSlider.style.display = "block";
-				const femalePercentage = (getPokemonState('speciesData').gender_rate / 8) * 100;
+				const femalePercentage = (speciesData.gender_rate / 8) * 100;
 				const malePercentage = 100 - femalePercentage;
 				genderSlider.value = malePercentage;
 				updateGenderRatioDisplay();
 			}
 
 			// egg groups
-			if (getPokemonState('speciesData').egg_groups && getPokemonState('speciesData').egg_groups.length > 0) {
-				eggGroup1.value = formatPokemonName(getPokemonState('speciesData').egg_groups[0].name);
-				if (getPokemonState('speciesData').egg_groups[1]) {
-					eggGroup2.value = formatPokemonName(getPokemonState('speciesData').egg_groups[1].name);
+			if (speciesData.egg_groups && speciesData.egg_groups.length > 0) {
+				eggGroup1.value = formatPokemonName(speciesData.egg_groups[0].name);
+				if (speciesData.egg_groups[1]) {
+					eggGroup2.value = formatPokemonName(speciesData.egg_groups[1].name);
 				} else {
 					eggGroup2.value = "N/A";
 				}
@@ -1267,9 +1787,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 
-		if (getPokemonState('pokemonData')) {
-			pokemonHeight.value = `${(getPokemonState('pokemonData').height / 10).toFixed(1)} m`; // decimeters to meters
-			pokemonWeight.value = `${(getPokemonState('pokemonData').weight / 10).toFixed(1)} kg`; // hectograms to kilograms
+		if (pokemonData) {
+			pokemonHeight.value = `${(pokemonData.height / 10).toFixed(1)} m`; // decimeters to meters
+			pokemonWeight.value = `${(pokemonData.weight / 10).toFixed(1)} kg`; // hectograms to kilograms
 		}
 	};
 
@@ -1278,8 +1798,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		const malePercent = parseInt(genderSlider.value);
 		const femalePercent = 100 - malePercent;
 
-		maleRatio.textContent = malePercent > 0 ? `♂ ${malePercent}%` : "";
-		femaleRatio.textContent = femalePercent > 0 ? `♀ ${femalePercent}%` : "";
+		maleRatio.textContent = malePercent > 0 ? `\u2642 ${malePercent}%` : "";
+		femaleRatio.textContent = femalePercent > 0 ? `\u2640 ${femalePercent}%` : "";
 
 		genderRatioBar.style.setProperty("--male-percent", `${malePercent}%`);
 	};
@@ -1291,9 +1811,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			);
 			flavorText.value = englishFlavorText ?
 				formatFlavorText(englishFlavorText.flavor_text) :
-				"No flavor text available for this Pokémon";
+				"No flavor text available for this PokÃ©mon";
 		} else {
-			flavorText.value = "Search for a Pokémon to see its Pokédex entry";
+			flavorText.value = "Search for a PokÃ©mon to see its PokÃ©dex entry";
 		}
 		autoResizeFlavorText();
 	};
@@ -1360,7 +1880,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			evolutionContainer.innerHTML = "";
 		}
 
-		flavorText.value = "Search for a Pokémon to see its Pokédex entry";
+		flavorText.value = "Search for a PokÃ©mon to see its PokÃ©dex entry";
 
 		ability1.value = "Ability 1";
 		ability2.value = "Ability 2";
@@ -1373,10 +1893,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			updateStatDisplay(slider, document.getElementById(`stat-value-${stat.apiName}`), 0);
 		});
 		updateBST();
-
-		document.querySelectorAll('.move-input').forEach(input => input.value = "");
+		resetStatAffectors();
+		updateFinalStats();
 	};
-
 
 	init();
 });
