@@ -38,9 +38,24 @@
                 </li>
               </ul>
             </div>
+            <button id="stat-affector-toggle" type="button">Stats</button>
+            <button id="stats-view-toggle" type="button" title="Toggle between bars and hexagon">📊︎</button>
             <button id="search-button">Go</button>
             <button id="theme-toggle">☀</button>
             <button id="information-button">🛈</button>
+            <div id="stat-affector-dropdown" class="stat-affector-dropdown hidden">
+              <div class="dropdown-header">
+                <span>Stats Editor</span>
+                <button id="stat-affector-close" type="button">×</button>
+              </div>
+              <div class="affector-meta-row">
+                <label for="level-input">Level</label>
+                <input id="level-input" type="number" min="1" max="100" value="50" />
+                <label for="nature-select">Nature</label>
+                <select id="nature-select"></select>
+              </div>
+              <div id="affector-stat-container"></div>
+            </div>
           </div>
           <div id="search-error-container"></div>
         </div>
@@ -115,6 +130,7 @@
         </div>
         <div id="stats-panel" class="panel">
           <div id="stat-container"></div>
+          <div id="stats-hexagon-container" class="hidden"></div>
         </div>
         <div id="flavor-text-panel" class="panel">
           <textarea id="flavor-text">Search for a Pokémon to see its Pokédex entry</textarea>
