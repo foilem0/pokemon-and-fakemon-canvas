@@ -255,296 +255,221 @@ document.addEventListener("DOMContentLoaded", () => {
 		svg: null
 	};
 
-	const natureEffects = {
-		hardy: {
-			increase: null,
-			decrease: null
-		},
-		lonely: {
-			increase: 'attack',
-			decrease: 'defense'
-		},
-		adamant: {
-			increase: 'attack',
-			decrease: 'special-attack'
-		},
-		naughty: {
-			increase: 'attack',
-			decrease: 'special-defense'
-		},
-		brave: {
-			increase: 'attack',
-			decrease: 'speed'
-		},
-		bold: {
-			increase: 'defense',
-			decrease: 'attack'
-		},
-		docile: {
-			increase: null,
-			decrease: null
-		},
-		relaxed: {
-			increase: 'defense',
-			decrease: 'speed'
-		},
-		impish: {
-			increase: 'defense',
-			decrease: 'special-attack'
-		},
-		lax: {
-			increase: 'defense',
-			decrease: 'special-defense'
-		},
-		timid: {
-			increase: 'speed',
-			decrease: 'attack'
-		},
-		hasty: {
-			increase: 'speed',
-			decrease: 'defense'
-		},
-		serious: {
-			increase: null,
-			decrease: null
-		},
-		jolly: {
-			increase: 'speed',
-			decrease: 'special-attack'
-		},
-		mild: {
-			increase: 'special-attack',
-			decrease: 'defense'
-		},
-		modest: {
-			increase: 'special-attack',
-			decrease: 'attack'
-		},
-		naive: {
-			increase: 'speed',
-			decrease: 'special-defense'
-		},
-		quiet: {
-			increase: 'special-attack',
-			decrease: 'speed'
-		},
-		bashful: {
-			increase: null,
-			decrease: null
-		},
-		quirky: {
-			increase: null,
-			decrease: null
-		},
-		rash: {
-			increase: 'special-attack',
-			decrease: 'special-defense'
-		},
-		sassy: {
-			increase: 'special-defense',
-			decrease: 'speed'
-		},
-		calm: {
-			increase: 'special-defense',
-			decrease: 'attack'
-		},
-		careful: {
-			increase: 'special-defense',
-			decrease: 'special-attack'
-		},
-		gentle: {
-			increase: 'special-defense',
-			decrease: 'defense'
-		}
-	};
+const natureEffects = {
+	hardy: { increase: null, decrease: null },
+	lonely: { increase: 'attack', decrease: 'defense' },
+	adamant: { increase: 'attack', decrease: 'special-attack' },
+	naughty: { increase: 'attack', decrease: 'special-defense' },
+	brave: { increase: 'attack', decrease: 'speed' },
+	bold: { increase: 'defense', decrease: 'attack' },
+	docile: { increase: null, decrease: null },
+	relaxed: { increase: 'defense', decrease: 'speed' },
+	impish: { increase: 'defense', decrease: 'special-attack' },
+	lax: { increase: 'defense', decrease: 'special-defense' },
+	timid: { increase: 'speed', decrease: 'attack' },
+	hasty: { increase: 'speed', decrease: 'defense' },
+	serious: { increase: null, decrease: null },
+	jolly: { increase: 'speed', decrease: 'special-attack' },
+	mild: { increase: 'special-attack', decrease: 'defense' },
+	modest: { increase: 'special-attack', decrease: 'attack' },
+	naive: { increase: 'speed', decrease: 'special-defense' },
+	quiet: { increase: 'special-attack', decrease: 'speed' },
+	bashful: { increase: null, decrease: null },
+	quirky: { increase: null, decrease: null },
+	rash: { increase: 'special-attack', decrease: 'special-defense' },
+	sassy: { increase: 'special-defense', decrease: 'speed' },
+	calm: { increase: 'special-defense', decrease: 'attack' },
+	careful: { increase: 'special-defense', decrease: 'special-attack' },
+	gentle: { increase: 'special-defense', decrease: 'defense' }
+};
 
-	const natureNames = [
-		'Hardy',
-		'Lonely',
-		'Adamant',
-		'Naughty',
-		'Brave',
-		'Bold',
-		'Docile',
-		'Relaxed',
-		'Impish',
-		'Lax',
-		'Timid',
-		'Hasty',
-		'Serious',
-		'Jolly',
-		'Mild',
-		'Modest',
-		'Naive',
-		'Quiet',
-		'Quirky',
-		'Rash',
-		'Sassy',
-		'Calm',
-		'Careful',
-		'Gentle'
-	];
+const natureNames = [
+	'Hardy',
+	'Lonely',
+	'Adamant',
+	'Naughty',
+	'Brave',
+	'Bold',
+	'Docile',
+	'Relaxed',
+	'Impish',
+	'Lax',
+	'Timid',
+	'Hasty',
+	'Serious',
+	'Jolly',
+	'Mild',
+	'Modest',
+	'Naive',
+	'Quiet',
+	'Quirky',
+	'Rash',
+	'Sassy',
+	'Calm',
+	'Careful',
+	'Gentle'
+];
 
-	const statAffectors = {
-		level: 50,
-		nature: 'hardy',
-		evs: {},
-		ivs: {}
-	};
+const statAffectors = {
+	level: 50,
+	nature: 'hardy',
+	evs: {},
+	ivs: {}
+};
 
-	pokemonStats.forEach((stat) => {
-		statAffectors.evs[stat.apiName] = 0;
-		statAffectors.ivs[stat.apiName] = 31;
-	});
+pokemonStats.forEach((stat) => {
+	statAffectors.evs[stat.apiName] = 0;
+	statAffectors.ivs[stat.apiName] = 31;
+});
 
-	const getNatureMultiplier = (statName) => {
-		const nature = natureEffects[statAffectors.nature] || {};
-		if (nature.increase === statName) return 1.1;
-		if (nature.decrease === statName) return 0.9;
-		return 1;
-	};
+const getNatureMultiplier = (statName) => {
+	const nature = natureEffects[statAffectors.nature] || {};
+	if (nature.increase === statName) return 1.1;
+	if (nature.decrease === statName) return 0.9;
+	return 1;
+};
 
-	const getNatureSign = (statName) => {
-		const nature = natureEffects[statAffectors.nature] || {};
-		if (nature.increase === statName) return '+';
-		if (nature.decrease === statName) return '-';
-		return '';
-	};
+const getNatureSign = (statName) => {
+	const nature = natureEffects[statAffectors.nature] || {};
+	if (nature.increase === statName) return '+';
+	if (nature.decrease === statName) return '-';
+	return '';
+};
 
-	const calculateFinalStat = (base, iv, ev, level, statName) => {
-		const adjustedEv = Math.floor(ev / 4);
-		if (statName === 'hp') {
-			return Math.floor(((2 * base + iv + adjustedEv) * level) / 100) + level + 10;
-		}
-		const intermediate = Math.floor(((2 * base + iv + adjustedEv) * level) / 100) + 5;
-		return Math.floor(intermediate * getNatureMultiplier(statName));
-	};
+const calculateFinalStat = (base, iv, ev, level, statName) => {
+	const adjustedEv = Math.floor(ev / 4);
+	if (statName === 'hp') {
+		return Math.floor(((2 * base + iv + adjustedEv) * level) / 100) + level + 10;
+	}
+	const intermediate = Math.floor(((2 * base + iv + adjustedEv) * level) / 100) + 5;
+	return Math.floor(intermediate * getNatureMultiplier(statName));
+};
 
-	const setupStatAffectorUI = () => {
-		const natureSelect = document.getElementById('nature-select');
-		const levelInput = document.getElementById('level-input');
-		const affectorStatContainer = document.getElementById('affector-stat-container');
+const setupStatAffectorUI = () => {
+	const natureSelect = document.getElementById('nature-select');
+	const levelInput = document.getElementById('level-input');
+	const affectorStatContainer = document.getElementById('affector-stat-container');
 
-		affectorElements.natureSelect = natureSelect;
-		affectorElements.levelInput = levelInput;
+	affectorElements.natureSelect = natureSelect;
+	affectorElements.levelInput = levelInput;
 
-		if (!isAffectorUIBuilt) {
-			natureSelect.innerHTML = '';
-			natureNames.forEach((name) => {
-				const option = document.createElement('option');
-				option.value = name.toLowerCase();
-				option.textContent = name;
-				if (name.toLowerCase() === statAffectors.nature) option.selected = true;
-				natureSelect.appendChild(option);
-			});
+	if (!isAffectorUIBuilt) {
+		natureSelect.innerHTML = '';
+		natureNames.forEach((name) => {
+			const option = document.createElement('option');
+			option.value = name.toLowerCase();
+			option.textContent = name;
+			if (name.toLowerCase() === statAffectors.nature) option.selected = true;
+			natureSelect.appendChild(option);
+		});
 
+		levelInput.value = statAffectors.level;
+		levelInput.addEventListener('input', () => {
+			const value = parseInt(levelInput.value, 10);
+			statAffectors.level = Number.isNaN(value) ? 50 : Math.min(100, Math.max(1, value));
 			levelInput.value = statAffectors.level;
-			levelInput.addEventListener('input', () => {
-				const value = parseInt(levelInput.value, 10);
-				statAffectors.level = Number.isNaN(value) ? 50 : Math.min(100, Math.max(1, value));
-				levelInput.value = statAffectors.level;
-				updateFinalStats();
-			});
+			updateFinalStats();
+		});
 
-			affectorStatContainer.innerHTML = '';
-			pokemonStats.forEach((stat) => {
-				const row = document.createElement('div');
-				row.classList.add('affector-stat-row');
+		affectorStatContainer.innerHTML = '';
+		pokemonStats.forEach((stat) => {
+			const row = document.createElement('div');
+			row.classList.add('affector-stat-row');
 
-				const label = document.createElement('span');
-				label.classList.add('affector-label');
-				label.textContent = stat.name;
-				row.appendChild(label);
+			const label = document.createElement('span');
+			label.classList.add('affector-label');
+			label.textContent = stat.name;
+			row.appendChild(label);
 
-				const evGroup = document.createElement('div');
-				evGroup.classList.add('range-group');
-				const evRange = document.createElement('input');
-				evRange.type = 'range';
-				evRange.id = `ev-${stat.apiName}`;
-				evRange.min = '0';
-				evRange.max = '252';
-				evRange.step = '4';
-				evRange.value = statAffectors.evs[stat.apiName];
-				const evValue = document.createElement('span');
-				evValue.classList.add('slider-value');
+			const evGroup = document.createElement('div');
+			evGroup.classList.add('range-group');
+			const evRange = document.createElement('input');
+			evRange.type = 'range';
+			evRange.id = `ev-${stat.apiName}`;
+			evRange.min = '0';
+			evRange.max = '252';
+			evRange.step = '4';
+			evRange.value = statAffectors.evs[stat.apiName];
+			const evValue = document.createElement('span');
+			evValue.classList.add('slider-value');
+			evValue.textContent = `EV ${evRange.value}`;
+			evRange.addEventListener('input', () => {
+				statAffectors.evs[stat.apiName] = parseInt(evRange.value, 10);
 				evValue.textContent = `EV ${evRange.value}`;
-				evRange.addEventListener('input', () => {
-					statAffectors.evs[stat.apiName] = parseInt(evRange.value, 10);
-					evValue.textContent = `EV ${evRange.value}`;
-					updateFinalStats();
-				});
-				evGroup.appendChild(evRange);
-				evGroup.appendChild(evValue);
-				row.appendChild(evGroup);
-
-				const ivGroup = document.createElement('div');
-				ivGroup.classList.add('range-group');
-				ivGroup.style.display = 'grid';
-				ivGroup.style.gridTemplateColumns = '1fr auto';
-				ivGroup.style.alignItems = 'center';
-				const ivInput = document.createElement('input');
-				ivInput.type = 'number';
-				ivInput.id = `iv-${stat.apiName}`;
-				ivInput.min = '0';
-				ivInput.max = '31';
-				ivInput.value = statAffectors.ivs[stat.apiName];
-				ivInput.style.width = '68px';
-				const ivLabel = document.createElement('span');
-				ivLabel.classList.add('slider-value');
-				ivLabel.textContent = 'IV';
-				ivInput.addEventListener('input', () => {
-					let value = parseInt(ivInput.value, 10);
-					if (Number.isNaN(value)) value = 0;
-					value = Math.min(31, Math.max(0, value));
-					ivInput.value = value;
-					statAffectors.ivs[stat.apiName] = value;
-					updateFinalStats();
-				});
-				ivGroup.appendChild(ivInput);
-				ivGroup.appendChild(ivLabel);
-				row.appendChild(ivGroup);
-
-				const finalValue = document.createElement('input');
-				finalValue.type = 'text';
-				finalValue.id = `final-affector-value-${stat.apiName}`;
-				finalValue.classList.add('stat-final-value');
-				finalValue.value = '0';
-				finalValue.readOnly = true;
-				row.appendChild(finalValue);
-
-				affectorStatContainer.appendChild(row);
-				affectorElements.rows[stat.apiName] = {
-					evRange,
-					evValue,
-					ivInput,
-					finalValue
-				};
-			});
-
-			natureSelect.addEventListener('change', () => {
-				statAffectors.nature = natureSelect.value;
 				updateFinalStats();
 			});
+			evGroup.appendChild(evRange);
+			evGroup.appendChild(evValue);
+			row.appendChild(evGroup);
 
-			isAffectorUIBuilt = true;
-		} else {
-			levelInput.value = statAffectors.level;
-			natureSelect.value = statAffectors.nature;
-			pokemonStats.forEach((stat) => {
-				const elements = affectorElements.rows[stat.apiName];
-				if (elements) {
-					elements.evRange.value = statAffectors.evs[stat.apiName];
-					elements.evValue.textContent = `EV ${elements.evRange.value}`;
-					elements.ivInput.value = statAffectors.ivs[stat.apiName];
-				}
+			const ivGroup = document.createElement('div');
+			ivGroup.classList.add('range-group');
+			ivGroup.style.display = 'grid';
+			ivGroup.style.gridTemplateColumns = '1fr auto';
+			ivGroup.style.alignItems = 'center';
+			const ivInput = document.createElement('input');
+			ivInput.type = 'number';
+			ivInput.id = `iv-${stat.apiName}`;
+			ivInput.min = '0';
+			ivInput.max = '31';
+			ivInput.value = statAffectors.ivs[stat.apiName];
+			ivInput.style.width = '68px';
+			const ivLabel = document.createElement('span');
+			ivLabel.classList.add('slider-value');
+			ivLabel.textContent = 'IV';
+			ivInput.addEventListener('input', () => {
+				let value = parseInt(ivInput.value, 10);
+				if (Number.isNaN(value)) value = 0;
+				value = Math.min(31, Math.max(0, value));
+				ivInput.value = value;
+				statAffectors.ivs[stat.apiName] = value;
+				updateFinalStats();
 			});
-		}
+			ivGroup.appendChild(ivInput);
+			ivGroup.appendChild(ivLabel);
+			row.appendChild(ivGroup);
 
-		updateFinalStats();
-		closeStatAffectorDropdown();
-	};
+			const finalValue = document.createElement('input');
+			finalValue.type = 'text';
+			finalValue.id = `final-affector-value-${stat.apiName}`;
+			finalValue.classList.add('stat-final-value');
+			finalValue.value = '0';
+			finalValue.readOnly = true;
+			row.appendChild(finalValue);
 
-	const updateFinalStats = () => {
+			affectorStatContainer.appendChild(row);
+			affectorElements.rows[stat.apiName] = {
+				evRange,
+				evValue,
+				ivInput,
+				finalValue
+			};
+		});
+
+		natureSelect.addEventListener('change', () => {
+			statAffectors.nature = natureSelect.value;
+			updateFinalStats();
+		});
+
+		isAffectorUIBuilt = true;
+	} else {
+		levelInput.value = statAffectors.level;
+		natureSelect.value = statAffectors.nature;
+		pokemonStats.forEach((stat) => {
+			const elements = affectorElements.rows[stat.apiName];
+			if (elements) {
+				elements.evRange.value = statAffectors.evs[stat.apiName];
+				elements.evValue.textContent = `EV ${elements.evRange.value}`;
+				elements.ivInput.value = statAffectors.ivs[stat.apiName];
+			}
+		});
+	}
+
+	updateFinalStats();
+	closeStatAffectorDropdown();
+};
+
+const updateFinalStats = () => {
 		const levelInput = affectorElements.levelInput || document.getElementById('level-input');
 		statAffectors.level = parseInt(levelInput?.value || statAffectors.level, 10) || statAffectors.level;
 		pokemonStats.forEach((stat) => {
@@ -585,178 +510,174 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 		});
 
-		const hexagonContainer = document.getElementById('stats-hexagon-container');
-		if (hexagonContainer && !hexagonContainer.classList.contains('hidden')) {
-			updateStatHexagon();
-		}
-	};
-
-	const buildStatHexagon = () => {
-		const hexagonContainer = document.getElementById('stats-hexagon-container');
-		if (!hexagonContainer) return;
-		hexagonContainer.innerHTML = '';
-
-		const width = 500;
-		const height = 500;
-		const centerX = width / 2;
-		const centerY = height / 2;
-		const radius = 180;
-
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.setAttribute('width', width);
-		svg.setAttribute('height', height);
-		svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-		const angles = Array.from({
-			length: 6
-		}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
-		const statNames = pokemonStats.map(stat => stat.name);
-
-		const maxPoints = angles.map((angle) => {
-			const x = centerX + radius * Math.cos(angle);
-			const y = centerY + radius * Math.sin(angle);
-			return [x, y];
-		});
-
-		const maxPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-		const maxPoints2D = maxPoints.map((p) => p.join(',')).join(' ');
-		maxPolygon.setAttribute('points', maxPoints2D);
-		maxPolygon.setAttribute('fill', 'none');
-		maxPolygon.setAttribute('stroke', 'var(--border-primary)');
-		maxPolygon.setAttribute('stroke-width', '1');
-		maxPolygon.setAttribute('opacity', '0.3');
-		svg.appendChild(maxPolygon);
-
-		angles.forEach((angle) => {
-			const x = centerX + radius * Math.cos(angle);
-			const y = centerY + radius * Math.sin(angle);
-			const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-			line.setAttribute('x1', centerX);
-			line.setAttribute('y1', centerY);
-			line.setAttribute('x2', x);
-			line.setAttribute('y2', y);
-			line.setAttribute('class', 'stat-hexagon-axes');
-			svg.appendChild(line);
-		});
-
-		const currentPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-		currentPolygon.setAttribute('class', 'stat-hexagon-polygon');
-		svg.appendChild(currentPolygon);
-
-		hexagonCache.valueNodes = [];
-
-		angles.forEach((angle, i) => {
-			const labelDistance = radius + 30;
-			const labelX = centerX + labelDistance * Math.cos(angle);
-			const labelY = centerY + labelDistance * Math.sin(angle);
-
-			const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-			label.setAttribute('x', labelX);
-			label.setAttribute('y', labelY);
-			label.setAttribute('class', 'stat-hexagon-label');
-			label.textContent = statNames[i];
-			svg.appendChild(label);
-
-			const value = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-			value.setAttribute('class', 'stat-hexagon-value');
-			hexagonCache.valueNodes.push(value);
-			svg.appendChild(value);
-		});
-
-		hexagonCache.built = true;
-		hexagonCache.currentPolygon = currentPolygon;
-		hexagonCache.svg = svg;
-		hexagonContainer.appendChild(svg);
+	const hexagonContainer = document.getElementById('stats-hexagon-container');
+	if (hexagonContainer && !hexagonContainer.classList.contains('hidden')) {
 		updateStatHexagon();
-	};
+	}
+};
 
-	const updateStatHexagon = () => {
-		if (!hexagonCache.built) {
-			buildStatHexagon();
-			return;
-		}
+const buildStatHexagon = () => {
+	const hexagonContainer = document.getElementById('stats-hexagon-container');
+	if (!hexagonContainer) return;
+	hexagonContainer.innerHTML = '';
 
-		const width = 500;
-		const height = 500;
-		const centerX = width / 2;
-		const centerY = height / 2;
-		const radius = 180;
-		const angles = Array.from({
-			length: 6
-		}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
+	const width = 500;
+	const height = 500;
+	const centerX = width / 2;
+	const centerY = height / 2;
+	const radius = 180;
 
-		const statValues = pokemonStats.map((stat) => {
-			const baseValue = parseInt(statElements[stat.apiName]?.valueInput?.value || 0, 10);
-			const evValue = statAffectors.evs[stat.apiName] ?? 0;
-			const ivValue = statAffectors.ivs[stat.apiName] ?? 31;
-			return calculateFinalStat(baseValue, ivValue, evValue, statAffectors.level, stat.apiName);
-		});
+	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('width', width);
+	svg.setAttribute('height', height);
+	svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-		const maxStat = 200;
-		const normalizedValues = statValues.map((v) => Math.min(v / maxStat, 1));
+	const angles = Array.from({length: 6}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
+	const statNames = pokemonStats.map(stat => stat.name);
 
-		const currentPoints = angles.map((angle, i) => {
-			const scaledRadius = radius * normalizedValues[i];
-			const x = centerX + scaledRadius * Math.cos(angle);
-			const y = centerY + scaledRadius * Math.sin(angle);
-			return [x, y];
-		});
+	const maxPoints = angles.map((angle) => {
+		const x = centerX + radius * Math.cos(angle);
+		const y = centerY + radius * Math.sin(angle);
+		return [x, y];
+	});
 
-		const points2D = currentPoints.map((p) => p.join(',')).join(' ');
-		hexagonCache.currentPolygon.setAttribute('points', points2D);
+	const maxPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+	const maxPoints2D = maxPoints.map((p) => p.join(',')).join(' ');
+	maxPolygon.setAttribute('points', maxPoints2D);
+	maxPolygon.setAttribute('fill', 'none');
+	maxPolygon.setAttribute('stroke', 'var(--border-primary)');
+	maxPolygon.setAttribute('stroke-width', '1');
+	maxPolygon.setAttribute('opacity', '0.3');
+	svg.appendChild(maxPolygon);
 
-		hexagonCache.valueNodes.forEach((valueNode, index) => {
-			const angle = angles[index];
-			const scaledRadius = radius * normalizedValues[index];
-			const valueDistance = scaledRadius + 22;
-			const x = centerX + valueDistance * Math.cos(angle);
-			const y = centerY + valueDistance * Math.sin(angle);
-			valueNode.setAttribute('x', x);
-			valueNode.setAttribute('y', y);
-			valueNode.textContent = statValues[index];
-		});
-	};
+	angles.forEach((angle) => {
+		const x = centerX + radius * Math.cos(angle);
+		const y = centerY + radius * Math.sin(angle);
+		const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+		line.setAttribute('x1', centerX);
+		line.setAttribute('y1', centerY);
+		line.setAttribute('x2', x);
+		line.setAttribute('y2', y);
+		line.setAttribute('class', 'stat-hexagon-axes');
+		svg.appendChild(line);
+	});
 
-	const toggleStatsView = () => {
-		const statContainer = document.getElementById('stat-container');
-		const hexagonContainer = document.getElementById('stats-hexagon-container');
-		const toggle = document.getElementById('stats-view-toggle');
+	const currentPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+	currentPolygon.setAttribute('class', 'stat-hexagon-polygon');
+	svg.appendChild(currentPolygon);
 
-		const isBarView = !statContainer.classList.contains('hidden');
+	hexagonCache.valueNodes = [];
 
-		if (isBarView) {
-			statContainer.classList.add('hidden');
-			hexagonContainer.classList.remove('hidden');
-			updateStatHexagon();
-			toggle.textContent = '📊︎';
-		} else {
-			statContainer.classList.remove('hidden');
-			hexagonContainer.classList.add('hidden');
-			toggle.textContent = '📊︎';
-		}
-	};
+	angles.forEach((angle, i) => {
+		const labelDistance = radius + 30;
+		const labelX = centerX + labelDistance * Math.cos(angle);
+		const labelY = centerY + labelDistance * Math.sin(angle);
 
-	const toggleStatAffectorDropdown = () => {
-		const dropdown = document.getElementById('stat-affector-dropdown');
-		dropdown?.classList.toggle('hidden');
-	};
+		const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		label.setAttribute('x', labelX);
+		label.setAttribute('y', labelY);
+		label.setAttribute('class', 'stat-hexagon-label');
+		label.textContent = statNames[i];
+		svg.appendChild(label);
 
-	const closeStatAffectorDropdown = () => {
-		const dropdown = document.getElementById('stat-affector-dropdown');
-		dropdown?.classList.add('hidden');
-	};
+		const value = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+		value.setAttribute('class', 'stat-hexagon-value');
+		hexagonCache.valueNodes.push(value);
+		svg.appendChild(value);
+	});
 
-	const resetStatAffectors = () => {
-		statAffectors.level = 50;
-		statAffectors.nature = 'hardy';
-		pokemonStats.forEach((stat) => {
-			statAffectors.evs[stat.apiName] = 0;
-			statAffectors.ivs[stat.apiName] = 31;
-		});
-		setupStatAffectorUI();
-	};
+	hexagonCache.built = true;
+	hexagonCache.currentPolygon = currentPolygon;
+	hexagonCache.svg = svg;
+	hexagonContainer.appendChild(svg);
+	updateStatHexagon();
+};
 
-	const loadPokemonSearchIndex = async () => {
+const updateStatHexagon = () => {
+	if (!hexagonCache.built) {
+		buildStatHexagon();
+		return;
+	}
+
+	const width = 500;
+	const height = 500;
+	const centerX = width / 2;
+	const centerY = height / 2;
+	const radius = 180;
+	const angles = Array.from({length: 6}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
+
+	const statValues = pokemonStats.map((stat) => {
+		const baseValue = parseInt(statElements[stat.apiName]?.valueInput?.value || 0, 10);
+		const evValue = statAffectors.evs[stat.apiName] ?? 0;
+		const ivValue = statAffectors.ivs[stat.apiName] ?? 31;
+		return calculateFinalStat(baseValue, ivValue, evValue, statAffectors.level, stat.apiName);
+	});
+
+	const maxStat = 200;
+	const normalizedValues = statValues.map((v) => Math.min(v / maxStat, 1));
+
+	const currentPoints = angles.map((angle, i) => {
+		const scaledRadius = radius * normalizedValues[i];
+		const x = centerX + scaledRadius * Math.cos(angle);
+		const y = centerY + scaledRadius * Math.sin(angle);
+		return [x, y];
+	});
+
+	const points2D = currentPoints.map((p) => p.join(',')).join(' ');
+	hexagonCache.currentPolygon.setAttribute('points', points2D);
+
+	hexagonCache.valueNodes.forEach((valueNode, index) => {
+		const angle = angles[index];
+		const scaledRadius = radius * normalizedValues[index];
+		const valueDistance = scaledRadius + 22;
+		const x = centerX + valueDistance * Math.cos(angle);
+		const y = centerY + valueDistance * Math.sin(angle);
+		valueNode.setAttribute('x', x);
+		valueNode.setAttribute('y', y);
+		valueNode.textContent = statValues[index];
+	});
+};
+
+const toggleStatsView = () => {
+	const statContainer = document.getElementById('stat-container');
+	const hexagonContainer = document.getElementById('stats-hexagon-container');
+	const toggle = document.getElementById('stats-view-toggle');
+
+	const isBarView = !statContainer.classList.contains('hidden');
+
+	if (isBarView) {
+		statContainer.classList.add('hidden');
+		hexagonContainer.classList.remove('hidden');
+		updateStatHexagon();
+		toggle.textContent = '📊︎';
+	} else {
+		statContainer.classList.remove('hidden');
+		hexagonContainer.classList.add('hidden');
+		toggle.textContent = '📊︎';
+	}
+};
+
+const toggleStatAffectorDropdown = () => {
+	const dropdown = document.getElementById('stat-affector-dropdown');
+	dropdown?.classList.toggle('hidden');
+};
+
+const closeStatAffectorDropdown = () => {
+	const dropdown = document.getElementById('stat-affector-dropdown');
+	dropdown?.classList.add('hidden');
+};
+
+const resetStatAffectors = () => {
+	statAffectors.level = 50;
+	statAffectors.nature = 'hardy';
+	pokemonStats.forEach((stat) => {
+		statAffectors.evs[stat.apiName] = 0;
+		statAffectors.ivs[stat.apiName] = 31;
+	});
+	setupStatAffectorUI();
+};
+
+const loadPokemonSearchIndex = async () => {
 		const cachedIndex = pokemonDataCache.get(SEARCH_INDEX_CACHE_KEY);
 		if (Array.isArray(cachedIndex) && cachedIndex.length > 0) {
 			pokemonSearchIndex.push(...cachedIndex);
@@ -1246,21 +1167,21 @@ document.addEventListener("DOMContentLoaded", () => {
 		updateFinalStats();
 	};
 
-	const populateTypeDropdowns = () => {
-		[primaryTypeSelector, secondaryTypeSelector].forEach(selectElement => {
-			const initialOptionValue = selectElement.id === 'type1-select' ? '' : 'none';
-			while (selectElement.children.length > 1 || (selectElement.children.length === 1 && selectElement.children[0].value !== initialOptionValue)) {
-				selectElement.removeChild(selectElement.lastChild);
-			}
+const populateTypeDropdowns = () => {
+	[primaryTypeSelector, secondaryTypeSelector].forEach(selectElement => {
+		const initialOptionValue = selectElement.id === 'type1-select' ? '' : 'none';
+		while (selectElement.children.length > 1 || (selectElement.children.length === 1 && selectElement.children[0].value !== initialOptionValue)) {
+			selectElement.removeChild(selectElement.lastChild);
+		}
 
-			availablePokemonTypes.forEach(type => {
-				const option = document.createElement('option');
-				option.value = type.value;
-				option.textContent = type.name;
-				selectElement.appendChild(option);
-			});
+		availablePokemonTypes.forEach(type => {
+			const option = document.createElement('option');
+			option.value = type.value;
+			option.textContent = type.name;
+			selectElement.appendChild(option);
 		});
-	};
+	});
+};
 
 	const updateTypes = () => {
 		const types = getPokemonState('pokemonData').types;
