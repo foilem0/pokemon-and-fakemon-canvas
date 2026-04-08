@@ -96,6 +96,32 @@
 		}
 	];
 
+	const statBarDisplayOrder = [{
+			name: "HP",
+			apiName: "hp"
+		},
+		{
+			name: "Attack",
+			apiName: "attack"
+		},
+		{
+			name: "Defense",
+			apiName: "defense"
+		},
+		{
+			name: "Sp. Attack",
+			apiName: "special-attack"
+		},
+		{
+			name: "Sp. Defense",
+			apiName: "special-defense"
+		},
+		{
+			name: "Speed",
+			apiName: "speed"
+		},
+	];
+
 	const availablePokemonTypes = [{
 			name: 'Normal',
 			value: 'normal'
@@ -525,12 +551,11 @@ const buildStatHexagon = () => {
 	const height = 500;
 	const centerX = width / 2;
 	const centerY = height / 2;
-	const radius = 180;
+	const radius = 140;
 
 	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	svg.setAttribute('width', width);
-	svg.setAttribute('height', height);
 	svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+	svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
 	const angles = Array.from({length: 6}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
 	const statNames = pokemonStats.map(stat => stat.name);
@@ -603,7 +628,7 @@ const updateStatHexagon = () => {
 	const height = 500;
 	const centerX = width / 2;
 	const centerY = height / 2;
-	const radius = 180;
+	const radius = 140;
 	const angles = Array.from({length: 6}, (_, i) => -Math.PI / 2 + i * Math.PI / 3);
 
 	const statValues = pokemonStats.map((stat) => {
@@ -1012,6 +1037,16 @@ const loadPokemonSearchIndex = async () => {
 		if (statsViewToggle) {
 			statsViewToggle.addEventListener('click', toggleStatsView);
 		}
+
+		let resizeTimeout;
+		window.addEventListener('resize', () => {
+			clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(() => {
+				if (hexagonCache.built && !document.getElementById('stats-hexagon-container').classList.contains('hidden')) {
+					buildStatHexagon();
+				}
+			}, 200);
+		});
 	};
 
 
@@ -1225,7 +1260,7 @@ const populateTypeDropdowns = () => {
 		const statContainer = document.getElementById("stat-container");
 		statContainer.innerHTML = "";
 
-		pokemonStats.forEach((stat) => {
+		statBarDisplayOrder.forEach((stat) => {
 			const statBarDiv = document.createElement("div");
 			statBarDiv.classList.add("stat-bar");
 
