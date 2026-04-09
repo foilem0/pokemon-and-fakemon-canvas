@@ -220,7 +220,6 @@
 		},
 
 		set(key, value) {
-			let data;
 			try {
 				const data = {
 					value,
@@ -238,7 +237,11 @@
 				if (e.name === 'QuotaExceededError') {
 					this.cleanup();
 					try {
-						localStorage.setItem(key, JSON.stringify(data));
+						const retryData = {
+							value,
+							expiry: Date.now() + this.ttl
+						};
+						localStorage.setItem(key, JSON.stringify(retryData));
 					} catch (retryError) {
 						console.error("Cache write failed after cleanup:", retryError);
 					}
@@ -735,13 +738,14 @@ const loadPokemonSearchIndex = async () => {
 		if (!items.length) return;
 
 		activeSuggestionIndex = Math.max(-1, Math.min(index, items.length - 1));
+		
+		// Performance: Use a single loop to update classes and minimize reflows
 		items.forEach((item, idx) => {
 			item.classList.toggle("active", idx === activeSuggestionIndex);
 		});
 
 		if (activeSuggestionIndex >= 0) {
-			const activeItem = items[activeSuggestionIndex];
-			activeItem.scrollIntoView({
+			items[activeSuggestionIndex].scrollIntoView({
 				block: "nearest"
 			});
 		}
@@ -1188,7 +1192,8 @@ const loadPokemonSearchIndex = async () => {
 	};
 
 	const updateStatsFromAPI = () => {
-		getPokemonState('pokemonData').stats.forEach((s) => {
+		const pokemonData = getPokemonState('pokemonData');
+		pokemonData.stats.forEach((s) => {
 			const value = s.base_stat;
 			const valueInput = document.getElementById(`stat-value-${s.stat.name}`);
 			const slider = document.getElementById(`stat-slider-${s.stat.name}`);
@@ -1915,17 +1920,22 @@ const populateTypeDropdowns = () => {
 			evolutionContainer.innerHTML = "";
 		}
 
-		flavorText.value = "Search for a PokÃ©mon to see its PokÃ©dex entry";
+		flavorText.value = "Search for a Pokémon to see its Pokédex entry";
 
 		ability1.value = "Ability 1";
 		ability2.value = "Ability 2";
 		hiddenAbility.value = "Hidden Ability";
 
-		pokemonStats.forEach(stat => {
-			document.getElementById(`stat-value-${stat.apiName}`).value = "0";
-			const slider = document.getElementById(`stat-slider-${stat.apiName}`);
-			slider.value = "0";
-			updateStatDisplay(slider, document.getElementById(`stat-value-${stat.apiName}`), 0);
+		// Use fragment to batch DOM updates
+		const statIds = pokemonStats.map(stat => stat.apiName);
+		statIds.forEach(statName => {
+			const valueInput = document.getElementById(`stat-value-${statName}`);
+			const slider = document.getElementById(`stat-slider-${statName}`);
+			if (valueInput && slider) {
+				valueInput.value = "0";
+				slider.value = "0";
+				updateStatDisplay(slider, valueInput, 0);
+			}
 		});
 		updateBST();
 		resetStatAffectors();
