@@ -1,9 +1,11 @@
-*
+# *
 
-!.gitignore
-!index.html
-!pafc-script.js
-!pafc-style.css
-!favicon.png
-!README.md
-!storage-manager.js
+# !.gitignore
+# !index.html
+# !pafc-script.js
+# !pafc-style.css
+# !favicon.png
+# !README.md
+# !storage-manager.js
+
+node_modules/
