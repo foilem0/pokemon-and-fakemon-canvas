@@ -1,12 +1,26 @@
-*
+node_modules/
 
-!.gitignore
-!index.html
-# !pafc-script.js
-!pafc-style.css
-!LICENSE
-!favicon.png
-!README.md
-# !storage-manager.js
-!src/
+dist/
 
+.env
+.env.local
+.env.*.local
+
+.vscode/settings.json
+.idea/
+
+.DS_Store
+Thumbs.db
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.cache/
+
+pokeapi.co/
+
+.cache
+
+/localfavicon.png
