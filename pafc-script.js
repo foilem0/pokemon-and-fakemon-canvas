@@ -198,73 +198,6 @@
 
 	const POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/";
 
-	const pokemonDataCache = {
-		maxSize: 50 * 1024 * 1024, // 50mb limit
-		ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
-
-		get(key) {
-			try {
-				const item = localStorage.getItem(key);
-				if (!item) return null;
-
-				const data = JSON.parse(item);
-				if (Date.now() > data.expiry) {
-					localStorage.removeItem(key);
-					return null;
-				}
-				return data.value;
-			} catch (e) {
-				console.error("Cache read error:", e);
-				return null;
-			}
-		},
-
-		set(key, value) {
-			try {
-				const data = {
-					value,
-					expiry: Date.now() + this.ttl
-				};
-
-				// check storage size before writing
-				const serialized = JSON.stringify(data);
-				if (serialized.length > this.maxSize) {
-					this.cleanup();
-				}
-
-				localStorage.setItem(key, serialized);
-			} catch (e) {
-				if (e.name === 'QuotaExceededError') {
-					this.cleanup();
-					try {
-						const retryData = {
-							value,
-							expiry: Date.now() + this.ttl
-						};
-						localStorage.setItem(key, JSON.stringify(retryData));
-					} catch (retryError) {
-						console.error("Cache write failed after cleanup:", retryError);
-					}
-				}
-			}
-		},
-
-		cleanup() {
-			const now = Date.now();
-			for (let i = localStorage.length - 1; i >= 0; i--) {
-				const key = localStorage.key(i);
-				try {
-					const item = JSON.parse(localStorage.getItem(key));
-					if (item && item.expiry && item.expiry < now) {
-						localStorage.removeItem(key);
-					}
-				} catch {
-					localStorage.removeItem(key);
-				}
-			}
-		}
-	};
-
 	const pokemonSearchIndex = [];
 	const SEARCH_INDEX_CACHE_KEY = 'pokemon_species_search_index';
 	let activeSuggestionIndex = -1;
@@ -706,7 +639,7 @@ const resetStatAffectors = () => {
 };
 
 const loadPokemonSearchIndex = async () => {
-		const cachedIndex = pokemonDataCache.get(SEARCH_INDEX_CACHE_KEY);
+		const cachedIndex = await StorageManager.get(StorageManager.STORES.SEARCH_INDEX, SEARCH_INDEX_CACHE_KEY);
 		if (Array.isArray(cachedIndex) && cachedIndex.length > 0) {
 			pokemonSearchIndex.push(...cachedIndex);
 			return;
@@ -717,10 +650,10 @@ const loadPokemonSearchIndex = async () => {
 			const data = await response.json();
 			if (Array.isArray(data.results)) {
 				pokemonSearchIndex.push(...data.results);
-				pokemonDataCache.set(SEARCH_INDEX_CACHE_KEY, pokemonSearchIndex);
+				await StorageManager.set(StorageManager.STORES.SEARCH_INDEX, SEARCH_INDEX_CACHE_KEY, pokemonSearchIndex);
 			}
 		} catch (error) {
-			console.error("Could not load PokÃ©mon search index:", error);
+			console.error("Could not load Pokémon search index:", error);
 		}
 	};
 
@@ -886,6 +819,7 @@ const loadPokemonSearchIndex = async () => {
 
 
 	const init = async () => {
+		await StorageManager.init();
 		applySavedTheme();
 		setupStatBars();
 		cacheStatElements();
@@ -1060,16 +994,16 @@ const loadPokemonSearchIndex = async () => {
 		clearSearchError();
 
 		try {
-			let speciesData = pokemonDataCache.get(`species_${speciesName}`);
+			let speciesData = await StorageManager.get(StorageManager.STORES.SPECIES_DATA, `species_${speciesName}`);
 			if (!speciesData) {
 				const speciesResponse = await fetch(
 					`${POKEAPI_BASE_URL}pokemon-species/${speciesName}`,
 				);
 				if (!speciesResponse.ok) {
-					throw new Error(`PokÃ©mon "${speciesName}" not found.`);
+					throw new Error(`Pokémon "${speciesName}" not found.`);
 				}
 				speciesData = await speciesResponse.json();
-				pokemonDataCache.set(`species_${speciesName}`, speciesData);
+				await StorageManager.set(StorageManager.STORES.SPECIES_DATA, `species_${speciesName}`, speciesData);
 			}
 			setPokemonState('speciesData', speciesData);
 			setPokemonState('varieties', speciesData.varieties);
@@ -1079,35 +1013,35 @@ const loadPokemonSearchIndex = async () => {
 			if (defaultVariety) {
 				fetchAndDisplayPokemon(defaultVariety.pokemon.url);
 			} else {
-				console.error("No default variety found for this PokÃ©mon species");
+				console.error("No default variety found for this Pokémon species");
 			}
 
 			// check cache for evo-chain, more instances
-			let evoChainData = pokemonDataCache.get(`evo_chain_${getPokemonState('speciesData').evolution_chain.url}`);
+			let evoChainData = await StorageManager.get(StorageManager.STORES.POKEMON_DATA, `evo_chain_${getPokemonState('speciesData').evolution_chain.url}`);
 			if (!evoChainData) {
 				const evoChainResponse = await fetch(
 					getPokemonState('speciesData').evolution_chain.url,
 				);
 				evoChainData = await evoChainResponse.json();
-				pokemonDataCache.set(`evo_chain_${getPokemonState('speciesData').evolution_chain.url}`, evoChainData);
+				await StorageManager.set(StorageManager.STORES.POKEMON_DATA, `evo_chain_${getPokemonState('speciesData').evolution_chain.url}`, evoChainData);
 			}
 			setPokemonState('evolutionChain', evoChainData);
 			updateEvolutionChain();
 			updateExtraInfo();
 		} catch (error) {
 			console.error(`Error fetching ${speciesName}:`, error);
-			displaySearchError(`Could not find PokÃ©mon: ${speciesName}. Please check the spelling.`);
+			displaySearchError(`Could not find Pokémon: ${speciesName}. Please check the spelling.`);
 			resetUI();
 		}
 	};
 
 	const fetchAndDisplayPokemon = async (pokemonUrl) => {
 		try {
-			let pokemonData = pokemonDataCache.get(`pokemon_${pokemonUrl}`);
+			let pokemonData = await StorageManager.get(StorageManager.STORES.POKEMON_DATA, `pokemon_${pokemonUrl}`);
 			if (!pokemonData) {
 				const response = await fetch(pokemonUrl);
 				pokemonData = await response.json();
-				pokemonDataCache.set(`pokemon_${pokemonUrl}`, pokemonData);
+				await StorageManager.set(StorageManager.STORES.POKEMON_DATA, `pokemon_${pokemonUrl}`, pokemonData);
 			}
 			setPokemonState('pokemonData', pokemonData);
 			setPokemonState('isShiny', false);
@@ -1119,7 +1053,7 @@ const loadPokemonSearchIndex = async () => {
 
 			updateAllUI();
 		} catch (error) {
-			console.error("Error fetching PokÃ©mon data:", error);
+			console.error("Error fetching Pokémon data:", error);
 		}
 	};
 
@@ -1179,15 +1113,20 @@ const loadPokemonSearchIndex = async () => {
 		setImageWithFallback(portrait, portraitSrc);
 	};
 
-	const handleImageUpload = (event) => {
+	const handleImageUpload = async (event) => {
 		const file = event.target.files[0];
 		if (file) {
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				setImageWithFallback(portrait, e.target.result);
+			try {
+				// Display the image immediately using a Blob URL
+				const blobUrl = URL.createObjectURL(file);
+				setImageWithFallback(portrait, blobUrl);
 				shinyToggleBtn.style.display = "none";
-			};
-			reader.readAsDataURL(file);
+				// Save the portrait as a Blob in IndexedDB
+				await StorageManager.savePortrait('custom_portrait', file);
+			} catch (error) {
+				console.error('Failed to save portrait:', error);
+				// Image is still displayed even if save fails
+			}
 		}
 	};
 
@@ -1614,11 +1553,11 @@ const populateTypeDropdowns = () => {
 
 	const fetchPokemonSprite = async (pokemonName, imgElement) => {
 		try {
-			let data = pokemonDataCache.get(`pokemon_evo_${pokemonName}`);
+			let data = await StorageManager.get(StorageManager.STORES.POKEMON_DATA, `pokemon_evo_${pokemonName}`);
 			if (!data) {
 				const response = await fetch(`${POKEAPI_BASE_URL}pokemon/${pokemonName}`);
 				data = await response.json();
-				pokemonDataCache.set(`pokemon_evo_${pokemonName}`, data);
+				await StorageManager.set(StorageManager.STORES.POKEMON_DATA, `pokemon_evo_${pokemonName}`, data);
 			}
 
 			const imgSrc = data.sprites.front_default || data.sprites.other["official-artwork"]?.front_default || '#';
@@ -1677,13 +1616,13 @@ const populateTypeDropdowns = () => {
 			return;
 		}
 
-		let itemData = pokemonDataCache.get(`item_${itemUrl}`);
+		let itemData = await StorageManager.get(StorageManager.STORES.POKEMON_DATA, `item_${itemUrl}`);
 		if (!itemData) {
 			try {
 				const response = await fetch(itemUrl);
 				if (!response.ok) throw new Error("Item not found");
 				itemData = await response.json();
-				pokemonDataCache.set(`item_${itemUrl}`, itemData);
+				await StorageManager.set(StorageManager.STORES.POKEMON_DATA, `item_${itemUrl}`, itemData);
 			} catch (error) {
 				console.error("Error fetching item sprite:", error);
 				existingSprite.style.display = 'none';
@@ -1799,13 +1738,13 @@ const populateTypeDropdowns = () => {
 				// const megaStoneName = `${basePokemonName}-mega-stone`; // in case PokeAPI ever adds mega-stones to evo-chains
 				const megaStoneApiUrl = `${POKEAPI_BASE_URL}item/${basePokemonName}-megastone`;
 
-				let megaStoneData = pokemonDataCache.get(`item_${megaStoneApiUrl}`);
+				let megaStoneData = await StorageManager.get(StorageManager.STORES.POKEMON_DATA, `item_${megaStoneApiUrl}`);
 				if (!megaStoneData) {
 					try {
 						const megaStoneResponse = await fetch(megaStoneApiUrl);
 						if (megaStoneResponse.ok) {
 							megaStoneData = await megaStoneResponse.json();
-							pokemonDataCache.set(`item_${megaStoneApiUrl}`, megaStoneData);
+							await StorageManager.set(StorageManager.STORES.POKEMON_DATA, `item_${megaStoneApiUrl}`, megaStoneData);
 						} else {
 							console.warn(`Mega stone for ${basePokemonName} not found via API. Using generic text.`);
 						}
