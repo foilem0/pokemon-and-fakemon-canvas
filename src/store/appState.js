@@ -105,6 +105,28 @@ class AppStateManager {
 	}
 
 	/**
+	 * Update deeply nested state (like statAffectors.evs.speed)
+	 */
+	setDeeplyNestedState(parentKey, childKey, nestedKey, value) {
+		if (this.state[parentKey] && this.state[parentKey][childKey]) {
+			if (this.state[parentKey][childKey][nestedKey] !== value) {
+				this.state[parentKey][childKey][nestedKey] = value;
+				this.notifyListeners(parentKey, this.state[parentKey]);
+			}
+		}
+	}
+
+	/**
+	 * Get deeply nested state value
+	 */
+	getDeeplyNestedState(parentKey, childKey, nestedKey) {
+		if (this.state[parentKey] && this.state[parentKey][childKey]) {
+			return this.state[parentKey][childKey][nestedKey];
+		}
+		return null;
+	}
+
+	/**
 	 * Reset Pokémon data (when changing species)
 	 */
 	resetPokemonData() {

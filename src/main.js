@@ -182,6 +182,8 @@ const updateTypeDisplay = (selectedType, typeNumber) => {
  */
 const updateTypes = () => {
 	const pokemonData = appState.getState('pokemonData');
+	if (!pokemonData) return;
+
 	const types = pokemonData.types;
 
 	typeContainer.classList.remove('single-type');
@@ -209,11 +211,9 @@ const updateTypes = () => {
  * Update abilities display
  */
 const updateAbilities = () => {
-	ability1.value = 'N/A';
-	ability2.value = 'N/A';
-	hiddenAbility.value = 'N/A';
-
 	const pokemonData = appState.getState('pokemonData');
+	if (!pokemonData) return;
+
 	pokemonData.abilities.forEach((ability) => {
 		if (ability.is_hidden) {
 			hiddenAbility.value = formatPokemonName(ability.ability.name);
@@ -241,6 +241,8 @@ const updateStatsFromAPI = () => {
 	});
 
 	// Update each stat from API data
+	if (!pokemonData) return;
+
 	pokemonData.stats.forEach((s) => {
 		const value = s.base_stat;
 		const statApiName = s.stat.name;

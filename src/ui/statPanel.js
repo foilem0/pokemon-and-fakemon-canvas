@@ -194,16 +194,6 @@ const cacheStatElements = () => {
 		};
 	});
 };
-	POKEMON_STATS.forEach((stat) => {
-		statElements[stat.apiName] = {
-			valueInput: document.getElementById(`stat-value-${stat.apiName}`),
-			slider: document.getElementById(`stat-slider-${stat.apiName}`),
-			baseBar: document.getElementById(`stat-base-${stat.apiName}`),
-			extensionBar: document.getElementById(`stat-extension-${stat.apiName}`),
-			natureSign: document.getElementById(`nature-sign-${stat.apiName}`)
-		};
-	});
-};
 
 /**
  * Update stat display (fill bar color)
@@ -281,9 +271,7 @@ const setupStatAffectorUI = () => {
 			evValue.textContent = `EV ${evRange.value}`;
 			evRange.addEventListener('input', () => {
 				const newEVValue = parseInt(evRange.value, 10);
-				const currentEvs = Object.assign({}, appState.getNestedState('statAffectors', 'evs'));
-				currentEvs[stat.apiName] = newEVValue;
-				appState.state.statAffectors.evs[stat.apiName] = newEVValue;
+				appState.setDeeplyNestedState('statAffectors', 'evs', stat.apiName, newEVValue);
 				evValue.textContent = `EV ${evRange.value}`;
 				updateFinalStats();
 			});
@@ -311,7 +299,7 @@ const setupStatAffectorUI = () => {
 				if (Number.isNaN(value)) value = 0;
 				value = Math.min(31, Math.max(0, value));
 				ivInput.value = value;
-				appState.state.statAffectors.ivs[stat.apiName] = value;
+				appState.setDeeplyNestedState('statAffectors', 'ivs', stat.apiName, value);
 				updateFinalStats();
 			});
 			ivGroup.appendChild(ivInput);

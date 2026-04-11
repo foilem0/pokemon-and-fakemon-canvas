@@ -180,6 +180,8 @@ export const updateEvolutionChain = () => {
  */
 export const displayEvolutionItemSprite = async (itemUrl) => {
 	const evolutionConditionItem = document.getElementById('evolution-condition');
+	if (!evolutionConditionItem) return;
+
 	const evoConditionParent = evolutionConditionItem.closest('.info-item');
 	let existingSprite = evoConditionParent ? evoConditionParent.querySelector('.evo-item-sprite') : null;
 

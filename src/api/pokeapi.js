@@ -44,6 +44,9 @@ export const fetchPokemonData = async (pokemonUrl) => {
 
 	if (!pokemonData) {
 		const response = await fetch(pokemonUrl);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch Pokémon data: ${response.status} ${response.statusText}`);
+		}
 		pokemonData = await response.json();
 		await StorageManager.set(
 			StorageManager.STORES.POKEMON_DATA,
@@ -66,6 +69,9 @@ export const fetchEvolutionChainData = async (chainUrl) => {
 
 	if (!evoChainData) {
 		const response = await fetch(chainUrl);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch evolution chain data: ${response.status} ${response.statusText}`);
+		}
 		evoChainData = await response.json();
 		await StorageManager.set(
 			StorageManager.STORES.POKEMON_DATA,
@@ -88,6 +94,9 @@ export const fetchPokemonSprite = async (pokemonName) => {
 
 	if (!data) {
 		const response = await fetch(`${POKEAPI_BASE_URL}pokemon/${pokemonName}`);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch sprite for ${pokemonName}: ${response.status} ${response.statusText}`);
+		}
 		data = await response.json();
 		await StorageManager.set(
 			StorageManager.STORES.POKEMON_DATA,
@@ -142,6 +151,9 @@ export const loadPokemonSearchIndex = async () => {
 
 	try {
 		const response = await fetch(`${POKEAPI_BASE_URL}pokemon-species?limit=100000`);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch search index: ${response.status} ${response.statusText}`);
+		}
 		const data = await response.json();
 		if (Array.isArray(data.results)) {
 			await StorageManager.set(

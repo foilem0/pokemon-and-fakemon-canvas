@@ -100,6 +100,8 @@ export const updatePortraitAndForms = () => {
 	const pokemonData = appState.getState('pokemonData');
 	const varieties = appState.getState('varieties');
 
+	if (!pokemonData) return;
+
 	const artwork = pokemonData.sprites.other['official-artwork'];
 	const portraitSrc = artwork?.front_default || pokemonData.sprites.front_default || '';
 	setImageWithFallback(portrait, portraitSrc);
