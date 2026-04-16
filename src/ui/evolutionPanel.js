@@ -221,7 +221,10 @@ export const displayEvolutionItemSprite = async (itemUrl) => {
  */
 export const getFormattedEvolutionCondition = async (speciesData, evolutionChain, pokemonData) => {
 	if (!speciesData.evolves_from_species) {
-		return 'Does not evolve from a prior form';
+		return {
+			text: 'Does not evolve from a prior form',
+			itemSpriteUrl: null
+		};
 	}
 
 	const preEvoName = formatPokemonName(speciesData.evolves_from_species.name);
@@ -267,7 +270,7 @@ export const getFormattedEvolutionCondition = async (speciesData, evolutionChain
 
 		if (megaStoneData) {
 			evoConditionText = `${capitalizeFirstLetter(formatPokemonName(basePokemonName))}, Holding ${formatPokemonName(megaStoneData.name)}`;
-			itemSpriteUrl = megaStoneData.sprites.default;
+			itemSpriteUrl = megaStoneData.url;
 		} else {
 			evoConditionText = `${capitalizeFirstLetter(formatPokemonName(basePokemonName))}, Holding Mega Stone`;
 		}
